@@ -1,0 +1,2271 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f3f6f2">
+  <title>Nếp — Bảng công việc cá nhân</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #20332e;
+      --muted: #53645b;
+      --line: #e7ece7;
+      --paper: #ffffff;
+      --canvas: #f3f6f2;
+      --green: #23745b;
+      --green-dark: #164f40;
+      --green-soft: #e8f2eb;
+      --coral: #da765e;
+      --yellow: #e8bb58;
+      --shadow: 0 18px 48px rgba(40, 66, 54, .06);
+      font-family: "DM Sans", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--canvas);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 320px; min-height: 100vh; }
+    button, input, select { font: inherit; }
+    button { color: inherit; }
+    .app { min-height: 100vh; display: grid; grid-template-columns: 238px minmax(0, 1fr); }
+    .sidebar {
+      min-height: 100vh; padding: 29px 18px 22px; background: #fff;
+      border-right: 1px solid var(--line); display: flex; flex-direction: column;
+    }
+    .brand { display: flex; align-items: center; gap: 11px; padding: 0 10px; }
+    .brand-mark { width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; background: var(--green); color: white; font-weight: 700; font-size: 18px; }
+    .brand-name { font-size: 19px; letter-spacing: 0; font-weight: 700; }
+    .brand-note { color: var(--muted); font-size: 11px; margin-top: 1px; }
+    .nav-label { margin: 42px 11px 12px; color: #98a39e; text-transform: uppercase; letter-spacing: 1.2px; font-size: 10px; font-weight: 700; }
+    .nav-list { display: grid; gap: 5px; }
+    .nav-item { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 43px; padding: 0 12px; border: 0; border-radius: 8px; background: transparent; text-align: left; font-size: 13px; color: #687770; cursor: pointer; transition: background .18s, color .18s; }
+    .nav-item:hover { background: #f5f8f5; color: var(--ink); }
+    .nav-item[aria-current="page"] { color: var(--green-dark); background: var(--green-soft); font-weight: 600; }
+    .nav-icon { width: 19px; text-align: center; font-size: 15px; }
+    .nav-count { margin-left: auto; font-size: 11px; color: #8b9891; }
+    .sidebar-bottom { margin-top: auto; padding: 17px 12px 0; border-top: 1px solid var(--line); }
+    .profile { display: flex; align-items: center; gap: 10px; }
+    .avatar { width: 34px; height: 34px; border-radius: 50%; background: #f5ddd3; color: #8d4d3c; display: grid; place-items: center; font-family: "Newsreader", Georgia, serif; font-size: 17px; }
+    .profile-name { font-size: 12px; font-weight: 600; }
+    .profile-caption { color: var(--muted); font-size: 10px; margin-top: 2px; }
+    main { min-width: 0; max-width: 1520px; width: 100%; margin: 0 auto; padding: 32px clamp(22px, 4vw, 58px) 48px; }
+    .topline { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 31px; }
+    .crumb { color: var(--muted); font-size: 12px; white-space: nowrap; }
+    .top-date { color: var(--muted); font-size: 12px; white-space: nowrap; }
+    .top-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .reminder-button { border: 1px solid #dce7de; border-radius: 6px; background: #fff; padding: 8px 10px; color: var(--green-dark); font-size: 10px; cursor: pointer; }
+    .reminder-button:hover { background: var(--green-soft); }
+    .sync-status { color: var(--muted); font-size: 10px; white-space: nowrap; }
+    .sync-status[data-state="cloud"] { color: var(--green); }
+    .account-button, .backup-button { border: 1px solid #dce7de; border-radius: 6px; background: #fff; padding: 8px 10px; color: var(--green-dark); font-size: 10px; cursor: pointer; white-space: nowrap; }
+    .account-button[hidden] { display: none; }
+    .backup-tools { display: flex; gap: 6px; }
+    .cloud-notice { display: none; margin-bottom: 18px; padding: 12px 14px; border: 1px solid #e4eae3; border-radius: 8px; background: #fff; color: #687770; font-size: 11px; line-height: 1.6; }
+    .cloud-notice.visible { display: block; }
+    .cloud-notice button { margin-left: 8px; border: 0; background: transparent; color: var(--green); font-weight: 700; cursor: pointer; }
+    .cloud-gate { display: none; min-height: 100vh; place-items: center; padding: 24px; background: radial-gradient(ellipse at 18% 15%, #e7f0e8 0, transparent 37%), radial-gradient(ellipse at 85% 82%, #f5e6db 0, transparent 32%), var(--canvas); }
+    body.auth-required .cloud-gate { display: grid; }
+    body.auth-required .app { display: none; }
+    .auth-panel { width: min(100%, 410px); padding: 30px; border: 1px solid var(--line); border-radius: 10px; background: #fff; box-shadow: var(--shadow); }
+    .auth-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
+    .auth-title { margin: 0; font: 500 30px/1.1 "Newsreader", Georgia, serif; }
+    .auth-copy { margin: 8px 0 21px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+    .auth-form { display: grid; gap: 12px; }
+    .auth-form label { display: grid; gap: 5px; color: #65736b; font-size: 10px; }
+    .auth-form input { width: 100%; height: 40px; border: 1px solid var(--line); border-radius: 6px; padding: 0 10px; outline-color: #9bb9a5; font-size: 12px; }
+    .auth-submit { height: 40px; margin-top: 3px; border: 0; border-radius: 6px; background: var(--green); color: #fff; font-size: 12px; font-weight: 700; cursor: pointer; }
+    .auth-switch { margin-top: 15px; border: 0; padding: 0; background: transparent; color: var(--green); font-size: 11px; cursor: pointer; }
+    .auth-message { min-height: 17px; margin: 10px 0 0; color: #a14f40; font-size: 11px; line-height: 1.5; }
+    .auth-message[data-tone="success"] { color: var(--green); }
+    .calendar-panel { margin: 0 0 18px; padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+    .calendar-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .calendar-heading { display: flex; align-items: baseline; gap: 8px; }
+    .calendar-heading strong { font: 500 20px "Newsreader", Georgia, serif; }
+    .calendar-heading span { color: var(--muted); font-size: 10px; }
+    .calendar-actions { display: flex; align-items: center; gap: 5px; }
+    .calendar-nav, .calendar-export { height: 30px; border: 1px solid var(--line); border-radius: 5px; padding: 0 8px; background: white; color: #617067; font-size: 10px; cursor: pointer; }
+    .calendar-nav { width: 30px; padding: 0; font-size: 14px; }
+    .calendar-nav:hover, .calendar-export:hover { background: var(--green-soft); color: var(--green-dark); }
+    .calendar-weekdays, .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+    .calendar-weekday { padding: 5px 0; color: var(--muted); text-align: center; font-size: 9px; font-weight: 700; }
+    .calendar-day { min-height: 49px; position: relative; border: 1px solid transparent; border-radius: 6px; padding: 6px 4px; background: #f8faf8; text-align: left; cursor: pointer; }
+    .calendar-day:hover { border-color: #cadace; }
+    .calendar-day.outside { color: #b2bbb5; background: #fff; }
+    .calendar-day.selected { border-color: var(--green); background: var(--green-soft); color: var(--green-dark); }
+    .calendar-day.today .calendar-day-number { color: var(--green); font-weight: 700; }
+    .calendar-day-number { display: block; font-size: 10px; }
+    .calendar-day-count { display: block; margin-top: 5px; color: #76857c; font-size: 8px; white-space: nowrap; }
+    .calendar-day.has-tasks::after { content: ""; width: 4px; height: 4px; position: absolute; top: 6px; right: 5px; border-radius: 50%; background: var(--coral); }
+    .calendar-selected-label { margin: 10px 0 0; color: #59685f; font-size: 11px; font-weight: 600; }
+    .identity-dialog { width: min(440px, calc(100vw - 28px)); padding: 0; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 24px 80px #20332e33; }
+    .identity-dialog::backdrop { background: #18352c66; backdrop-filter: blur(3px); }
+    .identity-form { display: grid; gap: 12px; padding: 22px; }
+    .identity-form h2 { margin: 0; font: 500 24px "Newsreader", Georgia, serif; }
+    .identity-form p { margin: -5px 0 2px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+    .identity-form label { display: grid; gap: 5px; color: #65736b; font-size: 10px; }
+    .identity-form input { height: 37px; border: 1px solid var(--line); border-radius: 5px; padding: 0 9px; font: inherit; }
+    .identity-actions { display: flex; justify-content: flex-end; gap: 7px; margin-top: 4px; }
+    .identity-actions button { min-height: 33px; padding: 0 11px; border: 1px solid var(--line); border-radius: 5px; background: #fff; font-size: 10px; cursor: pointer; }
+    .identity-actions .save-identity { border-color: var(--green); background: var(--green); color: #fff; }
+    .intro { display: flex; justify-content: space-between; align-items: end; gap: 20px; margin-bottom: 27px; }
+    .eyebrow { color: var(--green); font-size: 11px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; }
+    h1 { margin: 7px 0 0; font: 500 39px/1.1 "Newsreader", Georgia, serif; letter-spacing: 0; }
+    .intro-copy { color: var(--muted); font-size: 13px; margin: 9px 0 0; }
+    .date-chip { white-space: nowrap; border: 1px solid #dce7de; color: var(--green-dark); background: #edf4ee; padding: 9px 13px; border-radius: 7px; font-size: 11px; font-weight: 600; }
+    .overview { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; margin-bottom: 23px; }
+    .metric { padding: 17px 19px; min-height: 105px; background: var(--paper); border: 1px solid var(--line); border-radius: 9px; }
+    .metric-top { display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 11px; }
+    .metric-mark { width: 27px; height: 27px; border-radius: 8px; display: grid; place-items: center; color: var(--green); background: #eef5ef; font-size: 13px; }
+    .metric-value { display: flex; align-items: baseline; gap: 7px; margin-top: 9px; }
+    .metric-value strong { font-size: 25px; line-height: 1; letter-spacing: 0; }
+    .metric-value span { color: var(--muted); font-size: 11px; }
+    .workspace { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(260px, .88fr); gap: 22px; align-items: start; }
+    .task-column, .insight-column { min-width: 0; }
+    .section-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 0 0 13px; }
+    h2 { margin: 0; font-size: 15px; font-weight: 700; letter-spacing: 0; }
+    .section-caption { margin-top: 4px; color: var(--muted); font-size: 11px; }
+    .group-tools { margin-bottom: 14px; }
+    .display-options { margin: 0 0 10px; color: var(--muted); font-size: 10px; }
+    .display-options summary { width: fit-content; cursor: pointer; color: var(--green); font-weight: 700; }
+    .display-options-list { display: flex; flex-wrap: wrap; gap: 8px 13px; margin-top: 8px; }
+    .display-options-list label { display: flex; align-items: center; gap: 5px; cursor: pointer; }
+    .display-options-list input { accent-color: var(--green); }
+    body.hide-notes .task-description, body.hide-task-meta .task-meta, body.hide-schedule .task-times, body.hide-schedule .due-label { display: none; }
+    body.hide-performance .insight-column { display: none; }
+    body.hide-performance .workspace { grid-template-columns: minmax(0, 1fr); }
+    .group-tools-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .group-tools-header h3 { margin: 0; color: #67766e; font-size: 10px; font-weight: 700; }
+    .manage-groups-button { border: 0; padding: 4px 0; background: transparent; color: var(--green); font-size: 10px; font-weight: 700; cursor: pointer; }
+    .group-pills, .group-suggestions { display: flex; flex-wrap: wrap; gap: 6px; }
+    .group-pill, .suggestion-pill { border: 1px solid #e2e9e2; border-radius: 20px; padding: 6px 9px; background: #fff; color: #67766e; font-size: 10px; cursor: pointer; }
+    .group-pill[aria-pressed="true"] { border-color: #c5d9ca; background: var(--green-soft); color: var(--green-dark); font-weight: 700; }
+    .suggestion-pill { border-style: dashed; }
+    .suggestions-note { display: flex; align-items: center; gap: 8px; margin-top: 7px; color: var(--muted); font-size: 9px; }
+    .suggestions-note button { border: 0; padding: 0; background: transparent; color: var(--green); font-weight: 700; cursor: pointer; }
+    .group-dialog { width: min(520px, calc(100vw - 28px)); max-height: min(80vh, 700px); padding: 0; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 24px 80px #20332e33; }
+    .group-dialog::backdrop { background: #18352c66; backdrop-filter: blur(3px); }
+    .group-dialog-content { padding: 20px; }
+    .group-dialog-header { display: flex; align-items: start; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+    .group-dialog-header h2 { font: 500 23px/1.1 "Newsreader", Georgia, serif; }
+    .group-dialog-header p { margin: 5px 0 0; color: var(--muted); font-size: 10px; }
+    .group-create-form { display: flex; gap: 7px; margin: 14px 0; }
+    .group-create-form input, .group-edit-input { min-width: 0; height: 34px; border: 1px solid var(--line); border-radius: 5px; padding: 0 9px; font-size: 11px; }
+    .group-create-form input { flex: 1; }
+    .group-create-form button, .group-action { border: 1px solid var(--line); border-radius: 5px; padding: 0 9px; background: #fff; color: #64736a; font-size: 10px; cursor: pointer; }
+    .group-create-form button { background: var(--green); color: white; border-color: var(--green); }
+    .group-list { display: grid; gap: 6px; max-height: 310px; overflow-y: auto; padding: 0; margin: 0; list-style: none; }
+    .group-list-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 8px; border: 1px solid var(--line); border-radius: 6px; }
+    .group-edit-input { width: 100%; }
+    .group-row-actions { display: flex; gap: 4px; }
+    .group-action { height: 28px; }
+    .group-action.danger { color: #b85845; }
+    .dialog-close { float: right; margin-top: 13px; }
+    .task-count { color: var(--muted); font-size: 11px; }
+    .add-form { padding: 14px; background: var(--paper); border: 1px solid var(--line); border-radius: 9px; box-shadow: var(--shadow); margin-bottom: 17px; }
+    .task-input { display: block; width: 100%; border: 0; outline: 0; padding: 3px 1px 12px; background: transparent; color: var(--ink); font-size: 13px; }
+    .task-input::placeholder { color: #a1ada6; }
+    .task-notes { display: block; width: 100%; min-height: 46px; resize: vertical; border: 0; border-top: 1px solid #eff2ee; outline: 0; padding: 10px 1px 8px; color: var(--ink); background: transparent; font-size: 11px; line-height: 1.5; }
+    .task-notes::placeholder { color: #a1ada6; }
+    .task-mode-toggle { display: inline-flex; align-items: center; gap: 6px; padding: 3px; margin-bottom: 10px; border: 1px solid var(--line); border-radius: 7px; background: #f7faf7; }
+    .mode-button { min-height: 28px; padding: 0 10px; border: 0; border-radius: 5px; background: transparent; color: var(--muted); font-size: 10px; font-weight: 700; cursor: pointer; }
+    .mode-button.is-active { background: var(--green-soft); color: var(--green-dark); }
+    .form-bottom { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 10px; border-top: 1px solid #eff2ee; }
+    .detail-fields { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .add-form.quick-mode .detail-fields { display: none; }
+    .form-control { height: 32px; border: 1px solid #e8ede8; border-radius: 6px; padding: 0 8px; background: #fff; color: #627169; font-size: 10px; outline-color: #9bb9a5; }
+    .form-control[type="date"] { min-width: 125px; }
+    .form-control[type="time"] { min-width: 100px; }
+    .form-control.minutes { width: 84px; }
+    .submit-button { min-height: 33px; margin-left: auto; padding: 0 12px; border: 0; border-radius: 6px; background: var(--green); color: #fff; font-weight: 600; font-size: 11px; cursor: pointer; transition: background .18s, transform .18s; }
+    .submit-button:hover { background: var(--green-dark); transform: translateY(-1px); }
+    .cancel-edit { min-height: 33px; padding: 0 9px; border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--muted); font-size: 10px; cursor: pointer; }
+    .cancel-edit[hidden] { display: none; }
+    .task-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+    .filter-tools { display: flex; align-items: center; gap: 6px; }
+    .filters { display: flex; gap: 4px; overflow-x: auto; }
+    .filter-button { flex: 0 0 auto; padding: 7px 9px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); font-size: 10px; cursor: pointer; }
+    .filter-button[aria-pressed="true"] { background: #e7f0e9; color: var(--green-dark); font-weight: 700; }
+    .search { width: 135px; min-width: 90px; border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; font-size: 10px; outline-color: #9bb9a5; }
+    .task-list { display: grid; gap: 7px; }
+    .task-row { display: grid; grid-template-columns: 91px minmax(0, 1fr) auto; align-items: start; gap: 11px; padding: 13px 13px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); transition: border-color .18s, transform .18s; animation: appear .28s both; }
+    .task-row:hover { border-color: #cbd9ce; transform: translateY(-1px); }
+    .task-check { appearance: none; width: 17px; height: 17px; margin: 1px 0 0; border: 1.5px solid #bdc9c1; border-radius: 50%; cursor: pointer; display: grid; place-items: center; }
+    .task-check:checked { border-color: var(--green); background: var(--green); }
+    .task-check:checked::after { content: "✓"; color: white; font-size: 11px; line-height: 1; }
+    .task-status { width: 91px; height: 28px; border: 1px solid #c7d1ca; border-radius: 5px; background: white; color: #40534a; font-size: 10px; font-weight: 600; }
+    .task-title { overflow-wrap: anywhere; font-size: 12px; line-height: 1.5; font-weight: 600; }
+    .task-row.is-done .task-title { text-decoration: line-through; color: #9ba59f; }
+    .task-meta { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 6px; color: var(--muted); font-size: 11px; }
+    .priority { display: inline-flex; align-items: center; gap: 4px; }
+    .priority::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #aab4ae; }
+    .priority.high::before { background: var(--coral); }
+    .priority.medium::before { background: var(--yellow); }
+    .row-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; }
+    .due-label { color: #798780; white-space: nowrap; font-size: 10px; }
+    .due-label.overdue { color: #bd5c49; }
+    .delete-button, .edit-button { min-width: 25px; height: 25px; border: 0; border-radius: 5px; background: transparent; color: #a6b0aa; font-size: 15px; cursor: pointer; }
+    .delete-button:hover { background: #fff1ee; color: #b85845; }
+    .edit-button:hover { background: #edf4ee; color: var(--green-dark); }
+    .empty-state { padding: 30px 16px; border: 1px dashed #d5dfd7; border-radius: 8px; text-align: center; color: var(--muted); font-size: 12px; line-height: 1.7; }
+    .empty-mark { margin: 0 auto 10px; width: 35px; height: 35px; border-radius: 50%; display: grid; place-items: center; color: var(--green); background: var(--green-soft); font-size: 15px; }
+    .insight-block { padding: 18px 0; border-top: 1px solid #dfe7e0; }
+    .insight-block:first-child { padding-top: 1px; border-top: 0; }
+    .insight-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+    .insight-title h2 { font-size: 13px; }
+    .insight-title span { color: var(--muted); font-size: 10px; }
+    .period-switch { display: flex; padding: 2px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+    .period-button { border: 0; border-radius: 4px; background: transparent; padding: 5px 7px; color: var(--muted); font-size: 9px; cursor: pointer; }
+    .period-button[aria-pressed="true"] { background: var(--green-soft); color: var(--green-dark); font-weight: 700; }
+    .period-summary { display: flex; flex-wrap: wrap; gap: 8px 15px; margin-top: 13px; }
+    .period-summary strong { font-size: 16px; }
+    .period-summary span { display: block; margin-top: 2px; color: var(--muted); font-size: 9px; }
+    .schedule-warning { display: none; margin-top: 9px; border: 1px solid #d79b47; border-radius: 5px; padding: 9px 10px; background: #fff1d5; color: #68400b; font-size: 11px; font-weight: 600; line-height: 1.45; }
+    .schedule-warning.visible { display: block; }
+    .task-description { margin-top: 6px; color: #4e5d54; font-size: 11px; line-height: 1.5; white-space: pre-line; overflow-wrap: anywhere; }
+    .task-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+    .category-tag, .overdue-tag, .conflict-tag { border-radius: 4px; padding: 2px 5px; font-size: 9px; }
+    .category-tag { background: #edf2ed; color: #3f5147; }
+    .overdue-tag { border: 1px solid #d88779; background: #ffe5e0; color: #81281d; font-weight: 700; }
+    .conflict-tag { border: 1px solid #dea16c; background: #fff0dc; color: #70400d; font-weight: 700; }
+    .task-times { color: #43564b; white-space: nowrap; font-size: 10px; font-weight: 600; }
+    .task-countdown { color: #68776f; font-size: 9px; font-weight: 600; white-space: nowrap; }
+    .task-countdown.urgent { color: #8a4c08; font-size: 10px; }
+    .task-countdown.late { color: #9c2e20; font-size: 10px; font-weight: 700; }
+    .next-alert { display: grid; grid-template-columns: 33px minmax(0, 1fr) auto auto; align-items: center; gap: 11px; margin: -9px 0 20px; padding: 12px 14px; border: 1px solid #e7b26e; border-radius: 8px; background: #fff4df; }
+    .next-alert[hidden] { display: none; }
+    .next-alert-icon { width: 31px; height: 31px; display: grid; place-items: center; border-radius: 8px; background: #f4ddb2; color: #794b0b; font-size: 14px; }
+    .next-alert-copy { min-width: 0; }
+    .next-alert-label { display: block; color: #794b0b; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+    .next-alert-title { display: block; margin-top: 3px; overflow: hidden; color: #302c22; font-size: 12px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+    .next-alert-countdown { color: #794b0b; font-size: 12px; font-weight: 700; white-space: nowrap; }
+    .next-alert-countdown.urgent { color: #9c2e20; }
+    .next-alert-count { color: #533c1e; font-size: 10px; font-weight: 600; white-space: nowrap; }
+    .next-alert-button { min-height: 32px; border: 1px solid #c48d43; border-radius: 5px; padding: 0 10px; background: #fff; color: #5f3c0c; font-size: 10px; font-weight: 700; cursor: pointer; }
+    .deadline-preview { margin: -11px 0 20px; border: 1px solid #d6e0d7; border-radius: 8px; background: #fff; }
+    .deadline-preview[hidden] { display: none; }
+    .deadline-preview-header { display: flex; justify-content: space-between; align-items: center; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+    .deadline-preview-header strong { color: #3e5147; font-size: 11px; }
+    .deadline-preview-header button { border: 0; background: transparent; color: var(--green-dark); font-size: 10px; font-weight: 700; cursor: pointer; }
+    .deadline-preview-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(205px, 1fr)); gap: 0 10px; padding: 3px 12px 8px; margin: 0; list-style: none; }
+    .deadline-preview-item { min-width: 0; border-bottom: 1px solid #edf1ed; }
+    .deadline-preview-item:last-child { border-bottom: 0; }
+    .deadline-preview-task { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 5px 10px; width: 100%; border: 0; padding: 8px 0; background: transparent; text-align: left; cursor: pointer; }
+    .deadline-preview-name { overflow: hidden; color: #2c3c33; font-size: 10px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+    .deadline-preview-meta { color: #40534a; font-size: 9px; }
+    .deadline-preview-timer { grid-column: 2; grid-row: 1 / span 2; align-self: center; color: #553d1b; font-size: 9px; font-weight: 700; white-space: nowrap; }
+    .deadline-preview-timer.urgent { color: #8c321f; }
+    .deadline-preview-empty { padding: 10px 12px; color: #53645b; font-size: 10px; }
+    .certainty-tag { border-radius: 4px; padding: 2px 5px; font-size: 9px; }
+    .certainty-tag.tentative { border: 1px dashed #7b5b27; background: #fff9e9; color: #694811; }
+    .hard-conflict { border-color: #c74634; background: #ffdfd9; color: #762117; font-weight: 700; }
+    .weekday-picker { display: flex; align-items: center; gap: 3px; padding: 0; border: 0; }
+    .weekday-picker[hidden] { display: none; }
+    .weekday-picker legend { margin-right: 4px; color: #40534a; font-size: 10px; }
+    .weekday-picker label { display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid #c7d1ca; border-radius: 50%; background: white; color: #40534a; font-size: 9px; cursor: pointer; }
+    .weekday-picker input { position: absolute; opacity: 0; pointer-events: none; }
+    .weekday-picker label:has(input:checked) { border-color: var(--green-dark); background: var(--green-dark); color: white; }
+    .task-view-note { margin: -4px 0 8px; color: #46584e; font-size: 11px; }
+    .duplicate-warning { display: none; margin-top: 7px; border: 1px solid #d88779; border-radius: 5px; padding: 9px 10px; background: #ffe5e0; color: #762117; font-size: 11px; font-weight: 600; line-height: 1.45; }
+    .duplicate-warning.visible { display: block; }
+    .planned-actual { color: var(--muted); font-size: 9px; }
+    .progress-area { display: flex; align-items: center; gap: 15px; margin-top: 17px; }
+    .progress-ring { --progress: 0deg; --remaining-color: var(--coral); width: 76px; height: 76px; flex: 0 0 76px; border-radius: 50%; display: grid; place-items: center; background: conic-gradient(var(--green) 0deg var(--progress), var(--remaining-color) var(--progress) 360deg); position: relative; }
+    .progress-ring::before { content: ""; width: 60px; height: 60px; border-radius: 50%; background: var(--canvas); position: absolute; }
+    .progress-ring strong { z-index: 1; font-size: 15px; }
+    .progress-copy strong { display: block; font-size: 12px; }
+    .progress-copy span { display: block; color: var(--muted); font-size: 10px; margin-top: 5px; line-height: 1.5; }
+    .week-chart { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); align-items: end; gap: 8px; height: 112px; margin-top: 16px; padding: 0 2px; }
+    .chart-day { display: grid; grid-template-rows: 1fr 14px; align-items: end; height: 100%; gap: 7px; text-align: center; }
+    .bar-track { width: 100%; height: 80px; display: flex; align-items: end; justify-content: center; gap: 2px; background: linear-gradient(to top, #f0f4f0 1px, transparent 1px); background-size: 100% 27px; }
+    .bar { width: min(10px, 42%); min-height: 3px; border-radius: 4px 4px 2px 2px; transition: height .3s; }
+    .bar-added { background: #da927d; }
+    .bar-completed { background: #78a98b; }
+    .chart-day.today .bar-completed { background: var(--green); }
+    .chart-label { color: #8a9790; font-size: 9px; }
+    .chart-day.today .chart-label { color: var(--green-dark); font-weight: 700; }
+    .chart-legend { display: flex; justify-content: center; gap: 14px; margin-top: 7px; color: var(--muted); font-size: 9px; }
+    .chart-legend span { display: inline-flex; align-items: center; gap: 5px; }
+    .chart-key { width: 7px; height: 7px; border-radius: 2px; }
+    .chart-key-added { background: #da927d; }
+    .chart-key-completed { background: #78a98b; }
+    .focus-stat { display: flex; align-items: center; gap: 11px; margin-top: 16px; }
+    .focus-icon { width: 35px; height: 35px; flex: 0 0 35px; display: grid; place-items: center; border-radius: 9px; background: #fbf1df; color: #a67a2b; font-size: 14px; }
+    .focus-stat strong { font-size: 18px; }
+    .focus-stat span { margin-left: 5px; color: var(--muted); font-size: 10px; }
+    .focus-note { margin: 5px 0 0 46px; color: var(--muted); font-size: 10px; }
+    .quote { padding: 13px 14px; border-left: 2px solid #df9a7f; background: #fff8f4; color: #785c50; font: 500 15px/1.4 "Newsreader", Georgia, serif; }
+    .quote span { display: block; margin-top: 7px; color: #a98c7e; font: 10px "DM Sans", "Segoe UI", sans-serif; }
+    .toast { position: fixed; bottom: 22px; left: 50%; z-index: 3; transform: translate(-50%, 12px); opacity: 0; pointer-events: none; padding: 10px 15px; border-radius: 7px; background: #20332e; color: white; font-size: 12px; transition: opacity .2s, transform .2s; }
+    .toast.visible { opacity: 1; transform: translate(-50%, 0); }
+    @keyframes appear { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    @media (max-width: 900px) {
+      .app { grid-template-columns: 205px minmax(0, 1fr); }
+      main { padding-right: 25px; padding-left: 25px; }
+      .workspace { grid-template-columns: minmax(0, 1fr); }
+      .insight-column { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 22px; }
+      .insight-block:first-child { grid-row: span 2; }
+    }
+    @media (max-width: 620px) {
+      .app { display: block; padding-bottom: 63px; }
+      .sidebar { min-height: 0; height: 58px; position: fixed; z-index: 2; bottom: 0; left: 0; right: 0; padding: 5px 10px; border-right: 0; border-top: 1px solid var(--line); }
+      .brand, .nav-label, .sidebar-bottom { display: none; }
+      .nav-list { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+      .nav-item { min-width: 0; min-height: 47px; padding: 3px 1px; flex-direction: column; justify-content: center; gap: 1px; font-size: 7px; }
+      .nav-item > span:nth-child(2) { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .nav-icon { font-size: 14px; }
+      .nav-count { display: none; }
+      main { padding: 19px 16px 30px; }
+      .topline { display: grid; grid-template-columns: minmax(0, 1fr); justify-content: start; gap: 8px; margin-bottom: 23px; }
+      .top-date { display: none; }
+      .top-actions { justify-content: flex-start; flex-wrap: wrap; gap: 7px; }
+      .backup-tools { flex-wrap: wrap; }
+      .reminder-button { padding: 7px 6px; font-size: 9px; }
+      .sync-status { display: none; }
+      .account-button, .backup-button { padding: 7px 6px; font-size: 9px; }
+      .intro { align-items: start; margin-bottom: 20px; }
+      h1 { font-size: 34px; }
+      .date-chip { padding: 8px; font-size: 9px; }
+      .overview { gap: 7px; margin-bottom: 20px; }
+      .metric { min-height: 91px; padding: 12px 10px; }
+      .metric-top { font-size: 9px; line-height: 1.3; }
+      .metric-mark { display: none; }
+      .metric-value strong { font-size: 21px; }
+      .metric-value span { font-size: 9px; }
+      .form-bottom { gap: 6px; }
+      .form-control { padding: 0 5px; font-size: 9px; }
+      .form-control[type="date"] { min-width: 117px; }
+      .form-control[type="time"] { min-width: 93px; }
+      .submit-button { padding: 0 9px; }
+      .task-toolbar { align-items: start; flex-direction: column; }
+      .calendar-day { min-height: 43px; padding: 5px 3px; }
+      .calendar-day-count { font-size: 7px; }
+      .calendar-export { max-width: 115px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .next-alert { grid-template-columns: 30px minmax(0, 1fr) auto; gap: 8px; }
+      .next-alert-count { grid-column: 2; }
+      .next-alert-button { grid-column: 3; grid-row: 2; justify-self: end; }
+      .deadline-preview-list { grid-template-columns: 1fr; }
+      .weekday-picker { flex-wrap: wrap; }
+      .search { width: 100%; }
+      .insight-column { grid-template-columns: 1fr; }
+      .insight-block:first-child { grid-row: auto; }
+      .quote { margin-bottom: 15px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+  <section class="cloud-gate" id="cloud-gate" aria-label="Đăng nhập">
+    <div class="auth-panel">
+      <div class="auth-brand"><div class="brand-mark" aria-hidden="true">n</div><div><div class="brand-name app-name">nếp</div><div class="brand-note">đồng bộ không gian cá nhân</div></div></div>
+      <h1 class="auth-title" id="auth-title">Đăng nhập</h1>
+      <p class="auth-copy" id="auth-copy">Đăng nhập để mở danh sách công việc riêng và đồng bộ giữa các thiết bị.</p>
+      <form class="auth-form" id="auth-form">
+        <label>Email<input id="auth-email" type="email" autocomplete="email" required></label>
+        <label>Mật khẩu<input id="auth-password" type="password" autocomplete="current-password" minlength="8" required></label>
+        <button class="auth-submit" id="auth-submit" type="submit">Đăng nhập</button>
+      </form>
+      <button class="auth-switch" id="auth-switch" type="button">Tạo tài khoản mới</button>
+      <p class="auth-message" id="auth-message" role="status" aria-live="polite"></p>
+    </div>
+  </section>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand"><div class="brand-mark" aria-hidden="true">n</div><div><div class="brand-name app-name">nếp</div><div class="brand-note">chậm mà chắc</div></div></div>
+      <div class="nav-label">Không gian của bạn</div>
+      <nav class="nav-list" aria-label="Lọc công việc">
+        <button class="nav-item" type="button" data-view="today" aria-current="page"><span class="nav-icon" aria-hidden="true">◷</span><span>Hôm nay</span><span class="nav-count" id="today-nav-count">0</span></button>
+        <button class="nav-item" type="button" data-view="calendar"><span class="nav-icon" aria-hidden="true">▦</span><span>Lịch</span><span class="nav-count" id="calendar-nav-count">0</span></button>
+        <button class="nav-item" type="button" data-view="upcoming"><span class="nav-icon" aria-hidden="true">▦</span><span>Sắp tới</span><span class="nav-count" id="upcoming-nav-count">0</span></button>
+        <button class="nav-item" type="button" data-view="overdue"><span class="nav-icon" aria-hidden="true">!</span><span>Quá hạn</span><span class="nav-count" id="overdue-nav-count">0</span></button>
+        <button class="nav-item" type="button" data-view="deadlines"><span class="nav-icon" aria-hidden="true">⌛</span><span>Deadline</span><span class="nav-count" id="deadline-nav-count">0</span></button>
+        <button class="nav-item" type="button" data-view="all"><span class="nav-icon" aria-hidden="true">☷</span><span>Tất cả việc</span><span class="nav-count" id="all-nav-count">0</span></button>
+        <button class="nav-item" type="button" data-view="completed"><span class="nav-icon" aria-hidden="true">✓</span><span>Đã hoàn thành</span><span class="nav-count" id="completed-nav-count">0</span></button>
+      </nav>
+      <div class="sidebar-bottom"><div class="profile"><div class="avatar" id="profile-avatar" aria-hidden="true">B</div><div><div class="profile-name" id="profile-name">Tên của bạn</div><div class="profile-caption">Không gian cá nhân</div></div><button class="account-button" id="identity-button" type="button" aria-label="Đổi tên và thông tin" title="Đổi tên và thông tin">Sửa</button></div></div>
+    </aside>
+
+    <main>
+      <div class="topline"><div class="crumb">Không gian cá nhân <span aria-hidden="true">/</span> <span id="app-name-crumb">Nếp</span></div><div class="top-actions"><span class="sync-status" id="sync-status" data-state="local">Chỉ lưu trên thiết bị</span><div class="top-date" id="top-date"></div><div class="backup-tools"><button class="backup-button" id="identity-button-top" type="button">Hồ sơ</button><button class="backup-button" id="export-calendar-button" type="button">Xuất lịch .ics</button><button class="backup-button" id="export-button" type="button">Tải bản sao</button><button class="backup-button" id="import-button" type="button">Nhập bản sao</button><input id="import-file" type="file" accept="application/json,.json" hidden></div><button class="account-button" id="sign-out-button" type="button" hidden>Đăng xuất</button><button class="reminder-button" id="reminder-button" type="button">Bật nhắc trong trang</button></div></div>
+      <section class="intro" aria-labelledby="page-title">
+        <div><div class="eyebrow">Một ngày có chủ đích</div><h1 id="page-title">Bảng điều khiển</h1><p class="intro-copy">Tập trung vào điều quan trọng, từng việc một.</p></div>
+        <div class="date-chip" id="date-chip"></div>
+      </section>
+
+      <section class="next-alert" id="next-alert" aria-live="polite" hidden>
+        <div class="next-alert-icon" aria-hidden="true">◷</div>
+        <div class="next-alert-copy"><span class="next-alert-label" id="next-alert-label"></span><span class="next-alert-title" id="next-alert-title"></span></div>
+        <span class="next-alert-countdown" id="next-alert-countdown"></span>
+        <span class="next-alert-count" id="next-alert-count"></span>
+        <button class="next-alert-button" id="next-alert-button" type="button">Xem công việc</button>
+      </section>
+      <section class="deadline-preview" id="deadline-preview" aria-label="Các deadline gần tới" hidden>
+        <div class="deadline-preview-header"><strong id="deadline-preview-title">Deadline trong 48 giờ tới</strong><button id="view-all-deadlines" type="button">Xem tất cả</button></div>
+        <ul class="deadline-preview-list" id="deadline-preview-list"></ul>
+      </section>
+
+      <section class="overview" aria-label="Tổng quan hôm nay">
+        <article class="metric"><div class="metric-top"><span id="today-total-label">Tổng công việc hôm nay</span><span class="metric-mark" aria-hidden="true">☷</span></div><div class="metric-value"><strong id="today-total">0</strong><span id="today-remaining">công việc</span></div></article>
+        <article class="metric"><div class="metric-top"><span id="today-done-label">Đã hoàn thành</span><span class="metric-mark" aria-hidden="true">✓</span></div><div class="metric-value"><strong id="today-done">0</strong><span id="today-done-caption">việc hôm nay</span></div></article>
+        <article class="metric"><div class="metric-top"><span>Thời gian thực tế</span><span class="metric-mark" aria-hidden="true">◷</span></div><div class="metric-value"><strong id="today-focus">0</strong><span id="today-focus-caption">phút hôm nay</span></div></article>
+      </section>
+
+      <div class="cloud-notice" id="cloud-notice" role="status"><span id="cloud-notice-text"></span><button id="migrate-button" type="button" hidden>Chuyển các việc trên máy này lên cloud</button></div>
+
+      <div class="workspace">
+        <section class="task-column" aria-labelledby="tasks-heading">
+          <div class="section-heading"><div><h2 id="tasks-heading">Việc của bạn</h2><div class="section-caption" id="list-caption">Bắt đầu từ một việc nhỏ.</div></div><span class="task-count" id="visible-count"></span></div>
+          <p class="task-view-note" id="task-view-note" hidden></p>
+          <section class="calendar-panel" id="calendar-panel" aria-label="Lịch công việc" hidden>
+            <div class="calendar-header"><div class="calendar-heading"><strong id="calendar-month-label"></strong><span id="calendar-selected-summary"></span></div><div class="calendar-actions"><button class="calendar-nav" id="calendar-prev" type="button" aria-label="Tháng trước">‹</button><button class="calendar-nav" id="calendar-next" type="button" aria-label="Tháng sau">›</button><button class="calendar-export" id="calendar-export-button" type="button">Xuất lịch tháng này</button></div></div>
+            <div class="calendar-weekdays" aria-hidden="true"><span class="calendar-weekday">T2</span><span class="calendar-weekday">T3</span><span class="calendar-weekday">T4</span><span class="calendar-weekday">T5</span><span class="calendar-weekday">T6</span><span class="calendar-weekday">T7</span><span class="calendar-weekday">CN</span></div>
+            <div class="calendar-grid" id="calendar-grid" role="grid" aria-label="Ngày trong tháng"></div>
+            <p class="calendar-selected-label" id="calendar-selected-label"></p>
+          </section>
+          <section class="group-tools" aria-label="Nhóm công việc">
+            <div class="group-tools-header"><h3>NHÓM CỦA BẠN</h3><button class="manage-groups-button" id="manage-groups-button" type="button">Quản lý nhóm</button></div>
+            <div class="group-pills" id="group-pills"></div>
+            <div class="group-suggestions" id="group-suggestions"></div>
+            <div class="suggestions-note" id="suggestions-note" hidden><span>Gợi ý nhóm ban đầu</span><button id="dismiss-suggestions" type="button">Bỏ qua</button></div>
+          </section>
+          <form class="add-form quick-mode" id="task-form">
+            <div class="task-mode-toggle" role="group" aria-label="Chế độ nhập"><button type="button" class="mode-button is-active" data-task-mode="quick" aria-pressed="true">Ghi nhanh</button><button type="button" class="mode-button" data-task-mode="detail" aria-pressed="false">Chi tiết</button></div>
+            <input class="task-input" id="task-input" maxlength="120" placeholder="Thêm một việc bạn muốn hoàn thành..." aria-label="Tên công việc" required>
+            <textarea class="task-notes" id="task-notes" maxlength="1000" placeholder="Nội dung, liên kết hoặc ghi chú (không bắt buộc)" aria-label="Nội dung chi tiết"></textarea>
+            <div class="form-bottom">
+              <select class="form-control" id="task-group" aria-label="Nhóm công việc"><option value="">Không phân nhóm</option></select>
+              <select class="form-control" id="task-priority" aria-label="Mức ưu tiên"><option value="low">Ưu tiên thấp</option><option value="medium" selected>Ưu tiên vừa</option><option value="high">Ưu tiên cao</option></select>
+              <div class="detail-fields">
+                <input class="form-control" id="task-schedule-date" type="date" aria-label="Ngày thực hiện">
+                <input class="form-control" id="task-start-time" type="time" aria-label="Giờ bắt đầu">
+                <input class="form-control" id="task-date" type="date" aria-label="Ngày đến hạn">
+                <input class="form-control" id="task-deadline-time" type="time" aria-label="Giờ đến hạn">
+                <select class="form-control" id="task-recurrence" aria-label="Lặp lại"><option value="none">Không lặp</option><option value="daily">Mỗi ngày</option><option value="weekdays">Thứ Hai–Thứ Sáu</option><option value="weekly">Mỗi tuần</option><option value="weekly_custom">Chọn ngày trong tuần</option><option value="monthly">Mỗi tháng</option></select>
+                <input class="form-control" id="task-recurrence-until" type="date" aria-label="Lặp đến ngày" title="Lặp đến ngày" disabled>
+                <fieldset class="weekday-picker" id="weekday-picker" hidden><legend>Lặp vào</legend><label><input type="checkbox" value="0" aria-label="Thứ Hai">T2</label><label><input type="checkbox" value="1" aria-label="Thứ Ba">T3</label><label><input type="checkbox" value="2" aria-label="Thứ Tư">T4</label><label><input type="checkbox" value="3" aria-label="Thứ Năm">T5</label><label><input type="checkbox" value="4" aria-label="Thứ Sáu">T6</label><label><input type="checkbox" value="5" aria-label="Thứ Bảy">T7</label><label><input type="checkbox" value="6" aria-label="Chủ Nhật">CN</label></fieldset>
+                <select class="form-control" id="task-certainty" aria-label="Độ chắc chắn"><option value="confirmed">Đã chốt</option><option value="tentative">Dự kiến</option></select>
+                <select class="form-control" id="task-conflict-policy" aria-label="Quy tắc trùng giờ"><option value="allow">Cho phép trùng</option><option value="prefer">Cảnh báo nếu trùng</option><option value="strict">Không được trùng giờ</option></select>
+                <input class="form-control minutes" id="task-minutes" type="number" min="5" max="600" step="5" value="25" aria-label="Thời lượng dự kiến tính bằng phút" title="Phút tập trung dự kiến">
+                <input class="form-control minutes" id="task-actual-minutes" type="number" min="0" max="6000" step="5" placeholder="Thực tế" aria-label="Thời gian thực tế đã dùng bằng phút">
+              </div>
+              <button class="cancel-edit" id="cancel-edit" type="button" hidden>Hủy sửa</button>
+              <button class="submit-button" type="submit">+ Thêm việc</button>
+            </div>
+            <div class="schedule-warning" id="schedule-warning" role="status"></div>
+            <div class="duplicate-warning" id="duplicate-warning" role="status"></div>
+          </form>
+          <div class="task-toolbar">
+            <div class="filters" role="group" aria-label="Bộ lọc công việc">
+              <button class="filter-button" type="button" data-filter="all" aria-pressed="true">Tất cả</button>
+              <button class="filter-button" type="button" data-filter="open" aria-pressed="false">Chưa xong</button>
+              <button class="filter-button" type="button" data-filter="high" aria-pressed="false">Ưu tiên cao</button>
+            </div>
+            <div class="filter-tools"><select class="form-control" id="group-filter" aria-label="Lọc theo nhóm"><option value="">Mọi nhóm</option></select><input class="search" id="search-input" type="search" placeholder="Tìm công việc" aria-label="Tìm công việc"></div>
+          </div>
+          <details class="display-options"><summary>Tuỳ chỉnh hiển thị</summary><div class="display-options-list"><label><input type="checkbox" data-display="hide-notes"> Ẩn ghi chú</label><label><input type="checkbox" data-display="hide-task-meta"> Ẩn ưu tiên và thời lượng</label><label><input type="checkbox" data-display="hide-schedule"> Ẩn ngày và giờ</label><label><input type="checkbox" data-display="hide-performance"> Ẩn bảng hiệu suất</label></div></details>
+          <div class="task-list" id="task-list" aria-live="polite"></div>
+        </section>
+
+        <aside class="insight-column" aria-label="Thống kê hiệu suất">
+          <section class="insight-block">
+            <div class="insight-title"><h2 id="progress-heading">Nhịp độ hôm nay</h2><span id="progress-caption">0/0 việc</span></div>
+            <div class="progress-area"><div class="progress-ring" id="progress-ring" role="img" aria-label="Hoàn thành 0 phần trăm"><strong id="progress-percent">0%</strong></div><div class="progress-copy"><strong id="progress-title">Bắt đầu thật nhẹ</strong><span id="progress-copy">Mỗi bước nhỏ đều đưa bạn tiến lên.</span></div></div>
+          </section>
+          <section class="insight-block">
+            <div class="insight-title"><h2>Hiệu suất</h2><div class="period-switch" role="group" aria-label="Khoảng thời gian"><button class="period-button" type="button" data-period="day" aria-pressed="true">Ngày</button><button class="period-button" type="button" data-period="week" aria-pressed="false">Tuần</button><button class="period-button" type="button" data-period="month" aria-pressed="false">Tháng</button></div></div>
+            <div class="period-summary"><div><strong id="period-scheduled">0</strong><span>tổng việc</span></div><div><strong id="period-completed">0</strong><span>hoàn thành</span></div><div><strong id="period-remaining">0</strong><span>còn lại</span></div><div><strong id="period-overdue">0</strong><span>quá hạn</span></div></div>
+            <div class="period-summary"><div><strong id="period-planned">0</strong><span>phút dự kiến</span></div><div><strong id="period-actual">—</strong><span>phút thực tế</span></div><div><strong id="period-focus">0</strong><span>phút hoàn thành ước tính</span></div></div>
+            <div class="week-chart" id="week-chart" aria-label="So sánh công việc phát sinh và hoàn thành theo thời gian"></div>
+            <div class="chart-legend" aria-hidden="true"><span><i class="chart-key chart-key-added"></i>Tổng việc</span><span><i class="chart-key chart-key-completed"></i>Hoàn thành</span></div>
+          </section>
+          <section class="insight-block">
+            <div class="insight-title"><h2>Thời gian đã dùng</h2><span id="focus-period-label">hôm nay</span></div>
+            <div class="focus-stat"><div class="focus-icon" aria-hidden="true">◷</div><div><strong id="focus-hours">0</strong><span id="focus-unit">phút</span></div></div>
+            <p class="focus-note" id="focus-note">Thời lượng dự kiến của việc đã xong.</p>
+          </section>
+          <div class="quote">“Không cần hoàn hảo. Chỉ cần bắt đầu.”<span>Một lời nhắc cho hôm nay</span></div>
+        </aside>
+      </div>
+    </main>
+  </div>
+  <dialog class="group-dialog" id="group-dialog" aria-labelledby="group-dialog-title">
+    <div class="group-dialog-content">
+      <div class="group-dialog-header"><div><h2 id="group-dialog-title">Nhóm công việc</h2><p>Nhóm chỉ thuộc tài khoản của bạn. Có thể lưu trữ hoặc đổi thứ tự bất cứ lúc nào.</p></div><button class="delete-button" id="close-group-dialog" type="button" aria-label="Đóng">×</button></div>
+      <form class="group-create-form" id="group-form"><input id="group-name-input" maxlength="40" placeholder="Tên nhóm mới" aria-label="Tên nhóm mới" required><button type="submit">Tạo nhóm</button></form>
+      <div class="group-suggestions" id="dialog-group-suggestions"></div>
+      <p class="suggestions-note" id="dialog-suggestions-note"><span>Chọn gợi ý để thêm hoặc tự đặt tên nhóm.</span><button id="dialog-dismiss-suggestions" type="button">Bỏ qua gợi ý</button></p>
+      <ul class="group-list" id="group-list"></ul>
+      <button class="group-action dialog-close" id="done-group-dialog" type="button">Xong</button>
+    </div>
+  </dialog>
+  <dialog class="identity-dialog" id="identity-dialog" aria-labelledby="identity-title">
+    <form class="identity-form" id="identity-form" method="dialog">
+      <h2 id="identity-title">Thông tin không gian</h2>
+      <p>Tên này hiển thị trên các thiết bị khi dùng cùng tài khoản.</p>
+      <label>Tên người sở hữu<input id="owner-name-input" maxlength="60" autocomplete="name" placeholder="Tên của bạn"></label>
+      <label>Tên bảng công việc<input id="app-name-input" maxlength="40" placeholder="Tên ứng dụng"></label>
+      <div class="identity-actions"><button id="cancel-identity" type="button">Hủy</button><button class="save-identity" type="submit">Lưu thông tin</button></div>
+    </form>
+  </dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./config.js"></script>
+  <script>
+    const appConfig = window.APP_CONFIG || {};
+    const supabaseClient = appConfig.supabaseUrl && appConfig.supabaseAnonKey && window.supabase
+      ? window.supabase.createClient(appConfig.supabaseUrl, appConfig.supabaseAnonKey)
+      : null;
+    const form = document.querySelector("#task-form");
+    const modeButtons = [...document.querySelectorAll(".mode-button")];
+    const input = document.querySelector("#task-input");
+    const taskDate = document.querySelector("#task-date");
+    const scheduleDate = document.querySelector("#task-schedule-date");
+    const startTimeInput = document.querySelector("#task-start-time");
+    const deadlineTimeInput = document.querySelector("#task-deadline-time");
+    const groupInput = document.querySelector("#task-group");
+    const notesInput = document.querySelector("#task-notes");
+    const priorityInput = document.querySelector("#task-priority");
+    const recurrenceInput = document.querySelector("#task-recurrence");
+    const recurrenceUntilInput = document.querySelector("#task-recurrence-until");
+    const recurrenceDaysInput = document.querySelector("#weekday-picker");
+    const recurrenceDayCheckboxes = [...recurrenceDaysInput.querySelectorAll('input[type="checkbox"]')];
+    const certaintyInput = document.querySelector("#task-certainty");
+    const conflictPolicyInput = document.querySelector("#task-conflict-policy");
+    const minutesInput = document.querySelector("#task-minutes");
+    const actualMinutesInput = document.querySelector("#task-actual-minutes");
+    const list = document.querySelector("#task-list");
+    const searchInput = document.querySelector("#search-input");
+    const groupFilter = document.querySelector("#group-filter");
+    const today = localDateKey(new Date());
+    let activeTaskMode = "quick";
+    let calendarSelectedDate = today;
+    let calendarMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    let appSettings = loadAppSettings();
+    let activeView = "today";
+    let activeFilter = "all";
+    let activePeriod = "day";
+    let activeGroupId = "";
+    let editingTaskId = "";
+    let toastTimer;
+    let tasks = loadTasks();
+    const deviceTasks = tasks.map((task) => ({ ...task }));
+    let groups = loadGroups();
+    const deviceGroups = groups.map((group) => ({ ...group }));
+    let cloudSession = null;
+    let realtimeChannel = null;
+    let migrationCandidate = deviceTasks.length > 0;
+
+    if (supabaseClient) document.body.classList.add("auth-required");
+
+    function localDateKey(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    function createUuid() {
+      if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+      return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (character) => {
+        const random = Math.random() * 16 | 0;
+        return (character === "x" ? random : (random & 3 | 8)).toString(16);
+      });
+    }
+
+    function loadTasks() {
+      try {
+        const stored = JSON.parse(localStorage.getItem("tasks") || "[]");
+        if (!Array.isArray(stored)) return [];
+        return stored.map((task) => ({
+          id: task.id || (globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`),
+          title: task.title || task.name || "Công việc chưa đặt tên",
+          notes: task.notes || "",
+          category: ["work", "learning", "meeting", "personal"].includes(task.category) ? task.category : "work",
+          groupId: task.groupId || "",
+          done: Boolean(task.done),
+          status: ["todo", "in_progress", "done"].includes(task.status) ? task.status : task.done ? "done" : "todo",
+          dueDate: task.dueDate || "",
+          scheduleDate: task.scheduleDate || task.dueDate || "",
+          startTime: task.startTime || "",
+          deadlineTime: task.deadlineTime || "",
+          priority: ["low", "medium", "high"].includes(task.priority) ? task.priority : "medium",
+          minutes: Number(task.minutes) || 25,
+          actualMinutes: Number.isFinite(Number(task.actualMinutes)) && task.actualMinutes !== "" && task.actualMinutes !== null ? Number(task.actualMinutes) : null,
+          recurrence: ["none", "daily", "weekdays", "weekly", "weekly_custom", "monthly"].includes(task.recurrence) ? task.recurrence : "none",
+          recurrenceUntil: task.recurrenceUntil || "",
+          recurrenceDays: Array.isArray(task.recurrenceDays) ? [...new Set(task.recurrenceDays.map(Number).filter((day) => day >= 0 && day <= 6))].sort() : [],
+          certainty: task.certainty === "tentative" ? "tentative" : "confirmed",
+          conflictPolicy: ["allow", "prefer", "strict"].includes(task.conflictPolicy) ? task.conflictPolicy : "prefer",
+          seriesId: task.seriesId || task.id || "",
+          createdAt: task.createdAt || new Date().toISOString(),
+          completedAt: task.completedAt || "",
+          reminderNotified: task.reminderNotified || ""
+        }));
+      } catch {
+        return [];
+      }
+    }
+
+    function loadGroups() {
+      try {
+        const stored = JSON.parse(localStorage.getItem("task-groups") || "[]");
+        return Array.isArray(stored) ? stored.filter((group) => group && group.id && group.name).map((group, index) => ({
+          id: group.id,
+          name: String(group.name).trim(),
+          sortOrder: Number(group.sortOrder) || index,
+          archived: Boolean(group.archived)
+        })) : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function loadAppSettings() {
+      try {
+        return JSON.parse(localStorage.getItem("app-settings") || "{}") || {};
+      } catch {
+        return {};
+      }
+    }
+
+    function applyAppSettings(settings) {
+      appSettings = {
+        ownerName: String(settings.ownerName || "").trim(),
+        appName: String(settings.appName || "Nếp").trim() || "Nếp"
+      };
+      const ownerName = appSettings.ownerName || cloudSession?.user.email || "Tên của bạn";
+      const initial = [...ownerName.trim()][0]?.toLocaleUpperCase("vi") || "B";
+      document.querySelector("#profile-name").textContent = ownerName;
+      document.querySelector("#profile-avatar").textContent = initial;
+      document.querySelectorAll(".app-name").forEach((element) => { element.textContent = appSettings.appName; });
+      document.querySelector("#app-name-crumb").textContent = appSettings.appName;
+      document.title = `${appSettings.appName} — Bảng công việc cá nhân`;
+      document.querySelectorAll(".brand-mark").forEach((element) => { element.textContent = initial; });
+      document.querySelector("#owner-name-input").value = appSettings.ownerName;
+      document.querySelector("#app-name-input").value = appSettings.appName;
+    }
+
+    async function persistAppSettings(settings) {
+      const next = { ownerName: settings.ownerName.trim(), appName: settings.appName.trim() || "Nếp" };
+      applyAppSettings(next);
+      if (cloudSession && supabaseClient) {
+        const { error } = await supabaseClient.auth.updateUser({ data: { display_name: next.ownerName, app_name: next.appName } });
+        if (error) throw error;
+      } else {
+        localStorage.setItem("app-settings", JSON.stringify(next));
+      }
+    }
+
+    async function save(options = {}) {
+      const cacheKey = cloudSession ? `tasks-cloud:${cloudSession.user.id}` : "tasks";
+      localStorage.setItem(cacheKey, JSON.stringify(tasks));
+      render();
+      if (!supabaseClient || !cloudSession) return true;
+      setSyncStatus("cloud", "Đang đồng bộ…");
+      try {
+        const deletedIds = [...new Set([options.deletedId, ...(options.deletedIds || [])].filter(Boolean))];
+        if (deletedIds.length) {
+          const { error } = await supabaseClient.from("tasks").delete().eq("user_id", cloudSession.user.id).in("id", deletedIds);
+          if (error) throw error;
+        }
+        if (options.task) await pushCloudTasks([options.task]);
+        if (options.tasks?.length) await pushCloudTasks(options.tasks);
+        setSyncStatus("cloud", "Đã đồng bộ");
+        return true;
+      } catch (error) {
+        setSyncStatus("error", "Chưa đồng bộ · thử lại khi có mạng");
+        showToast(`Không thể đồng bộ: ${error.message}`);
+        return false;
+      }
+    }
+
+    function setSyncStatus(state, message) {
+      const status = document.querySelector("#sync-status");
+      status.dataset.state = state;
+      status.textContent = message;
+    }
+
+    function toCloudTask(task, userId) {
+      return {
+        id: task.id,
+        user_id: userId,
+        title: task.title,
+        notes: task.notes,
+        category: task.category,
+        group_id: task.groupId || null,
+        series_id: task.seriesId || task.id,
+        done: task.done,
+        status: task.status,
+        due_date: task.dueDate || null,
+        schedule_date: task.scheduleDate || null,
+        start_time: task.startTime || null,
+        deadline_time: task.deadlineTime || null,
+        priority: task.priority,
+        minutes: task.minutes,
+        actual_minutes: task.actualMinutes,
+        recurrence: task.recurrence,
+        recurrence_until: task.recurrenceUntil || null,
+        recurrence_days: task.recurrenceDays || [],
+        certainty: task.certainty || "confirmed",
+        conflict_policy: task.conflictPolicy || "prefer",
+        created_at: task.createdAt,
+        completed_at: task.completedAt || null,
+        reminder_notified: task.reminderNotified || ""
+      };
+    }
+
+    function fromCloudTask(task) {
+      return {
+        id: task.id,
+        title: task.title,
+        notes: task.notes || "",
+        category: task.category || "work",
+        groupId: task.group_id || "",
+        seriesId: task.series_id || task.id,
+        done: task.done,
+        status: task.status || (task.done ? "done" : "todo"),
+        dueDate: task.due_date || "",
+        scheduleDate: task.schedule_date || "",
+        startTime: task.start_time || "",
+        deadlineTime: task.deadline_time || "",
+        priority: task.priority || "medium",
+        minutes: task.minutes || 25,
+        actualMinutes: task.actual_minutes === null || task.actual_minutes === undefined ? null : Number(task.actual_minutes),
+        recurrence: task.recurrence || "none",
+        recurrenceUntil: task.recurrence_until || "",
+        recurrenceDays: task.recurrence_days || [],
+        certainty: task.certainty || "confirmed",
+        conflictPolicy: task.conflict_policy || "prefer",
+        createdAt: task.created_at,
+        completedAt: task.completed_at || "",
+        reminderNotified: task.reminder_notified || ""
+      };
+    }
+
+    async function pushCloudTasks(taskList) {
+      if (!taskList.length) return;
+      const { error } = await supabaseClient.from("tasks").upsert(
+        taskList.map((task) => toCloudTask(task, cloudSession.user.id)),
+        { onConflict: "user_id,id" }
+      );
+      if (error) throw error;
+    }
+
+    async function persistGroups(options = {}) {
+      localStorage.setItem(cloudSession ? `task-groups-cloud:${cloudSession.user.id}` : "task-groups", JSON.stringify(groups));
+      renderGroups();
+      render();
+      if (!supabaseClient || !cloudSession) return true;
+      try {
+        if (options.deletedId) {
+          const { error } = await supabaseClient.from("task_groups").delete().eq("user_id", cloudSession.user.id).eq("id", options.deletedId);
+          if (error) throw error;
+        }
+        if (options.group) {
+          const group = { ...options.group, user_id: cloudSession.user.id, sort_order: options.group.sortOrder };
+          delete group.sortOrder;
+          const { error } = await supabaseClient.from("task_groups").upsert(group, { onConflict: "id" });
+          if (error) throw error;
+        }
+        if (options.all && groups.length) {
+          const rows = groups.map((group) => ({ id: group.id, name: group.name, sort_order: group.sortOrder, archived: group.archived, user_id: cloudSession.user.id }));
+          const { error } = await supabaseClient.from("task_groups").upsert(rows, { onConflict: "id" });
+          if (error) throw error;
+        }
+        setSyncStatus("cloud", "Đã đồng bộ");
+        return true;
+      } catch (error) {
+        setSyncStatus("error", "Chưa đồng bộ nhóm");
+        showToast(`Không thể đồng bộ nhóm: ${error.message}`);
+        return false;
+      }
+    }
+
+    async function loadCloudGroups() {
+      if (!cloudSession) return;
+      const cacheKey = `task-groups-cloud:${cloudSession.user.id}`;
+      try {
+        const cached = JSON.parse(localStorage.getItem(cacheKey) || "[]");
+        groups = Array.isArray(cached) ? cached : [];
+      } catch {
+        groups = [];
+      }
+      renderGroups();
+      const { data, error } = await supabaseClient.from("task_groups").select("*").eq("user_id", cloudSession.user.id).order("sort_order", { ascending: true });
+      if (error) throw error;
+      groups = (data || []).map((group) => ({ id: group.id, name: group.name, sortOrder: group.sort_order, archived: group.archived }));
+      localStorage.setItem(cacheKey, JSON.stringify(groups));
+      renderGroups();
+    }
+
+    async function loadCloudTasks() {
+      if (!cloudSession) return;
+      const cacheKey = `tasks-cloud:${cloudSession.user.id}`;
+      try {
+        const cached = JSON.parse(localStorage.getItem(cacheKey) || "[]");
+        tasks = Array.isArray(cached) ? cached : [];
+      } catch {
+        tasks = [];
+      }
+      render();
+      const { data, error } = await supabaseClient.from("tasks").select("*").eq("user_id", cloudSession.user.id).order("created_at", { ascending: true });
+      if (error) throw error;
+      tasks = (data || []).map(fromCloudTask);
+      localStorage.setItem(cacheKey, JSON.stringify(tasks));
+      render();
+    }
+
+    async function handleCloudSession(session) {
+      cloudSession = session;
+      if (realtimeChannel) {
+        await supabaseClient.removeChannel(realtimeChannel);
+        realtimeChannel = null;
+      }
+      if (!session) {
+        tasks = [];
+        applyAppSettings(loadAppSettings());
+        document.body.classList.add("auth-required");
+        document.querySelector("#sign-out-button").hidden = true;
+        document.querySelector("#cloud-notice").classList.remove("visible");
+        return;
+      }
+
+      document.body.classList.remove("auth-required");
+      document.querySelector("#sign-out-button").hidden = false;
+      applyAppSettings({
+        ownerName: session.user.user_metadata?.display_name || session.user.email,
+        appName: session.user.user_metadata?.app_name || "Nếp"
+      });
+      setSyncStatus("cloud", "Đang tải dữ liệu…");
+      try {
+        await loadCloudGroups();
+        await loadCloudTasks();
+        const canMigrate = !tasks.length && !groups.length && migrationCandidate && (deviceTasks.length > 0 || deviceGroups.length > 0);
+        const notice = document.querySelector("#cloud-notice");
+        document.querySelector("#cloud-notice-text").textContent = canMigrate
+          ? `Tìm thấy ${deviceTasks.length} công việc và ${deviceGroups.length} nhóm cũ chỉ lưu trên thiết bị này.`
+          : "Đang đồng bộ công việc riêng của tài khoản này.";
+        document.querySelector("#migrate-button").hidden = !canMigrate;
+        notice.classList.toggle("visible", canMigrate);
+        migrationCandidate = canMigrate;
+        setSyncStatus("cloud", "Đã đồng bộ");
+        realtimeChannel = supabaseClient.channel(`tasks-${session.user.id}`)
+          .on("postgres_changes", { event: "*", schema: "public", table: "tasks", filter: `user_id=eq.${session.user.id}` }, () => {
+            loadCloudTasks().catch((error) => setSyncStatus("error", `Lỗi tải dữ liệu: ${error.message}`));
+          })
+          .on("postgres_changes", { event: "*", schema: "public", table: "task_groups", filter: `user_id=eq.${session.user.id}` }, () => {
+            loadCloudGroups().catch((error) => setSyncStatus("error", `Lỗi tải nhóm: ${error.message}`));
+          })
+          .subscribe();
+      } catch (error) {
+        setSyncStatus("error", "Không tải được cloud");
+        showToast(`Không thể tải dữ liệu: ${error.message}`);
+      }
+    }
+
+    document.querySelector("#migrate-button").addEventListener("click", async () => {
+      if (!cloudSession || (!deviceTasks.length && !deviceGroups.length)) return;
+      const button = document.querySelector("#migrate-button");
+      button.disabled = true;
+      tasks = deviceTasks.map((task) => ({ ...task }));
+      groups = deviceGroups.map((group) => ({ ...group }));
+      try {
+        if (!await persistGroups({ all: true }) || !await save({ tasks })) throw new Error("Không tải được dữ liệu lên cloud. Dữ liệu trên máy vẫn được giữ nguyên.");
+        migrationCandidate = false;
+        localStorage.removeItem("tasks");
+        localStorage.removeItem("task-groups");
+        document.querySelector("#cloud-notice").classList.remove("visible");
+        showToast("Đã chuyển công việc lên tài khoản cloud.");
+      } catch (error) {
+        showToast(error.message);
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    const suggestedGroups = ["Công việc", "Học tập", "Gia đình", "Sức khỏe", "Việc cá nhân"];
+
+    function normalizedText(value) {
+      return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("vi").replace(/\s+/g, " ").trim();
+    }
+
+    function visibleGroups() {
+      return groups.filter((group) => !group.archived).sort((first, second) => first.sortOrder - second.sortOrder || first.name.localeCompare(second.name, "vi"));
+    }
+
+    function suggestionsKey() {
+      return `groups-suggestions-dismissed:${cloudSession?.user.id || "local"}`;
+    }
+
+    function addSuggestionButtons(container) {
+      container.replaceChildren();
+      const existingNames = new Set(groups.map((group) => normalizedText(group.name)));
+      suggestedGroups.filter((name) => !existingNames.has(normalizedText(name))).forEach((name) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "suggestion-pill";
+        button.textContent = `+ ${name}`;
+        button.addEventListener("click", () => createGroup(name));
+        container.append(button);
+      });
+    }
+
+    function renderGroups() {
+      const activeGroups = visibleGroups();
+      const selectedGroup = groupInput.value;
+      const selectedFilter = groupFilter.value || activeGroupId;
+      groupInput.replaceChildren(new Option("Không phân nhóm", ""));
+      groupFilter.replaceChildren(new Option("Mọi nhóm", ""));
+      const pills = document.querySelector("#group-pills");
+      pills.replaceChildren();
+      const allGroupsButton = document.createElement("button");
+      allGroupsButton.type = "button";
+      allGroupsButton.className = "group-pill";
+      allGroupsButton.textContent = "Mọi nhóm";
+      allGroupsButton.setAttribute("aria-pressed", String(!activeGroupId));
+      allGroupsButton.addEventListener("click", () => { activeGroupId = ""; groupFilter.value = ""; render(); });
+      pills.append(allGroupsButton);
+
+      activeGroups.forEach((group) => {
+        groupInput.add(new Option(group.name, group.id));
+        groupFilter.add(new Option(group.name, group.id));
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "group-pill";
+        button.textContent = group.name;
+        button.setAttribute("aria-pressed", String(activeGroupId === group.id));
+        button.addEventListener("click", () => { activeGroupId = activeGroupId === group.id ? "" : group.id; groupFilter.value = activeGroupId; render(); });
+        pills.append(button);
+      });
+      groupInput.value = activeGroups.some((group) => group.id === selectedGroup) ? selectedGroup : "";
+      groupFilter.value = activeGroups.some((group) => group.id === selectedFilter) ? selectedFilter : "";
+      activeGroupId = groupFilter.value;
+
+      const dismissed = localStorage.getItem(suggestionsKey()) === "true";
+      const suggestionNote = document.querySelector("#suggestions-note");
+      const suggestions = document.querySelector("#group-suggestions");
+      const dialogSuggestions = document.querySelector("#dialog-group-suggestions");
+      addSuggestionButtons(suggestions);
+      addSuggestionButtons(dialogSuggestions);
+      suggestions.hidden = dismissed || suggestions.childElementCount === 0;
+      dialogSuggestions.hidden = dismissed || dialogSuggestions.childElementCount === 0;
+      suggestionNote.hidden = dismissed || suggestions.hidden;
+      document.querySelector("#dialog-suggestions-note").hidden = dismissed || dialogSuggestions.hidden;
+
+      const groupList = document.querySelector("#group-list");
+      groupList.replaceChildren();
+      groups.slice().sort((first, second) => first.sortOrder - second.sortOrder).forEach((group, index) => {
+        const row = document.createElement("li");
+        row.className = "group-list-item";
+        const name = document.createElement("input");
+        name.className = "group-edit-input";
+        name.maxLength = 40;
+        name.value = group.name;
+        name.setAttribute("aria-label", `Tên nhóm ${group.name}`);
+        const actions = document.createElement("div");
+        actions.className = "group-row-actions";
+        const rename = makeGroupAction("Lưu", `Lưu tên nhóm ${group.name}`, () => renameGroup(group, name.value));
+        const up = makeGroupAction("↑", `Chuyển ${group.name} lên`, () => moveGroup(group, -1));
+        const down = makeGroupAction("↓", `Chuyển ${group.name} xuống`, () => moveGroup(group, 1));
+        const archive = makeGroupAction(group.archived ? "Khôi phục" : "Lưu trữ", `${group.archived ? "Khôi phục" : "Lưu trữ"} ${group.name}`, () => toggleArchive(group));
+        const remove = makeGroupAction("Xóa", `Xóa nhóm ${group.name}`, () => deleteGroup(group), true);
+        up.disabled = index === 0;
+        down.disabled = index === groups.length - 1;
+        actions.append(rename, up, down, archive, remove);
+        row.append(name, actions);
+        groupList.append(row);
+      });
+    }
+
+    function makeGroupAction(label, ariaLabel, action, danger = false) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = `group-action${danger ? " danger" : ""}`;
+      button.textContent = label;
+      button.setAttribute("aria-label", ariaLabel);
+      button.addEventListener("click", action);
+      return button;
+    }
+
+    async function createGroup(rawName) {
+      const name = rawName.trim();
+      if (!name) return;
+      if (groups.some((group) => normalizedText(group.name) === normalizedText(name))) {
+        showToast("Nhóm này đã tồn tại.");
+        return;
+      }
+      const group = { id: createUuid(), name, sortOrder: groups.length, archived: false };
+      groups.push(group);
+      const saved = await persistGroups({ group });
+      if (saved) showToast(`Đã tạo nhóm ${name}.`);
+    }
+
+    async function renameGroup(group, rawName) {
+      const name = rawName.trim();
+      if (!name) return showToast("Tên nhóm không được để trống.");
+      if (groups.some((item) => item.id !== group.id && normalizedText(item.name) === normalizedText(name))) return showToast("Tên nhóm này đã được dùng.");
+      group.name = name;
+      await persistGroups({ group });
+    }
+
+    async function moveGroup(group, direction) {
+      const sorted = groups.slice().sort((first, second) => first.sortOrder - second.sortOrder);
+      const current = sorted.findIndex((item) => item.id === group.id);
+      const target = current + direction;
+      if (target < 0 || target >= sorted.length) return;
+      [sorted[current], sorted[target]] = [sorted[target], sorted[current]];
+      sorted.forEach((item, index) => { item.sortOrder = index; });
+      groups = sorted;
+      await persistGroups({ all: true });
+    }
+
+    async function toggleArchive(group) {
+      group.archived = !group.archived;
+      if (activeGroupId === group.id && group.archived) activeGroupId = "";
+      await persistGroups({ group });
+    }
+
+    async function deleteGroup(group) {
+      if (!window.confirm(`Xóa nhóm “${group.name}”? Công việc trong nhóm sẽ được giữ lại nhưng chuyển thành chưa phân nhóm.`)) return;
+      const changedTasks = tasks.filter((task) => task.groupId === group.id);
+      changedTasks.forEach((task) => { task.groupId = ""; });
+      groups = groups.filter((item) => item.id !== group.id);
+      if (activeGroupId === group.id) activeGroupId = "";
+      if (changedTasks.length) await save({ tasks: changedTasks });
+      await persistGroups({ deletedId: group.id });
+    }
+
+    document.querySelector("#manage-groups-button").addEventListener("click", () => document.querySelector("#group-dialog").showModal());
+    document.querySelector("#close-group-dialog").addEventListener("click", () => document.querySelector("#group-dialog").close());
+    document.querySelector("#done-group-dialog").addEventListener("click", () => document.querySelector("#group-dialog").close());
+    document.querySelector("#group-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const field = document.querySelector("#group-name-input");
+      await createGroup(field.value);
+      field.value = "";
+      field.focus();
+    });
+    ["#dismiss-suggestions", "#dialog-dismiss-suggestions"].forEach((selector) => document.querySelector(selector).addEventListener("click", () => {
+      localStorage.setItem(suggestionsKey(), "true");
+      renderGroups();
+    }));
+
+    function formatDate(date, options = { weekday: "long", day: "numeric", month: "long" }) {
+      return new Intl.DateTimeFormat("vi-VN", options).format(date);
+    }
+
+    function isToday(dateString) {
+      return dateString && dateString.slice(0, 10) === today;
+    }
+
+    function isInCurrentWeek(dateString) {
+      if (!dateString) return false;
+      const date = new Date(dateString);
+      const difference = new Date(today + "T00:00:00") - new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      return difference >= 0 && difference < 7 * 24 * 60 * 60 * 1000;
+    }
+
+    function isTodayTask(task) {
+      return !task.done && (task.scheduleDate === today || task.dueDate === today || (!task.scheduleDate && !task.dueDate));
+    }
+
+    function isOverdue(task) {
+      if (task.done || !task.dueDate) return false;
+      if (task.dueDate < today) return true;
+      const now = new Date();
+      const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      return task.dueDate === today && task.deadlineTime && task.deadlineTime < currentTime;
+    }
+
+    function taskDateKey(value) {
+      if (!value) return "";
+      if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? "" : localDateKey(date);
+    }
+
+    function getTaskProductivityDates(task) {
+      const plannedDates = [task.scheduleDate, task.dueDate].filter(Boolean);
+      const taskDates = plannedDates.length ? plannedDates : [taskDateKey(task.createdAt)];
+      const completedDate = taskDateKey(task.completedAt);
+      return [...new Set([...taskDates, completedDate].filter(Boolean))];
+    }
+
+    function isTaskRelevantOnDate(task, date) {
+      return getTaskProductivityDates(task).includes(date);
+    }
+
+    function isTaskRelevantInRange(task, range) {
+      return getTaskProductivityDates(task).some((date) => date >= range.start && date <= range.end);
+    }
+
+    function periodDateRange(period, now = new Date()) {
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      if (period === "week") start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+      if (period === "month") start.setDate(1);
+      const end = new Date(start);
+      if (period === "week") end.setDate(start.getDate() + 6);
+      if (period === "month") end.setMonth(start.getMonth() + 1, 0);
+      return { start: localDateKey(start), end: localDateKey(end) };
+    }
+
+    function isTaskInPeriod(task, period) {
+      const { start, end } = periodDateRange(period);
+      const date = task.done
+        ? (task.completedAt || "").slice(0, 10)
+        : task.scheduleDate || task.dueDate || (task.createdAt || "").slice(0, 10);
+      return Boolean(date && date >= start && date <= end);
+    }
+
+    async function createNextOccurrence(task) {
+      const baseDate = task.scheduleDate || task.dueDate || today;
+      const nextScheduleDate = nextRecurrenceDate(baseDate, task.recurrence, task.recurrenceDays);
+      let nextDueDate = "";
+      if (task.dueDate) {
+        const dayOffset = Math.round((new Date(`${task.dueDate}T00:00:00`) - new Date(`${baseDate}T00:00:00`)) / 86400000);
+        const dueDate = new Date(`${nextScheduleDate}T00:00:00`);
+        dueDate.setDate(dueDate.getDate() + dayOffset);
+        nextDueDate = localDateKey(dueDate);
+      }
+      const nextTask = {
+        ...task,
+        id: globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`,
+        seriesId: task.seriesId || task.id,
+        done: false,
+        status: "todo",
+        scheduleDate: nextScheduleDate,
+        dueDate: nextDueDate,
+        actualMinutes: null,
+        createdAt: new Date().toISOString(),
+        completedAt: "",
+        reminderNotified: ""
+      };
+      tasks.push(nextTask);
+      await save({ task: nextTask });
+    }
+
+    function nextRecurrenceDate(baseDate, recurrence, recurrenceDays = []) {
+      const nextDate = new Date(`${baseDate}T00:00:00`);
+      if (recurrence === "daily") nextDate.setDate(nextDate.getDate() + 1);
+      if (recurrence === "weekdays") {
+        nextDate.setDate(nextDate.getDate() + 1);
+        if (nextDate.getDay() === 6) nextDate.setDate(nextDate.getDate() + 2);
+        if (nextDate.getDay() === 0) nextDate.setDate(nextDate.getDate() + 1);
+      }
+      if (recurrence === "weekly") nextDate.setDate(nextDate.getDate() + 7);
+      if (recurrence === "weekly_custom") {
+        const selectedDays = new Set(recurrenceDays.map(Number));
+        for (let offset = 1; offset <= 7; offset += 1) {
+          const candidate = new Date(`${baseDate}T00:00:00`);
+          candidate.setDate(candidate.getDate() + offset);
+          if (selectedDays.has((candidate.getDay() + 6) % 7)) return localDateKey(candidate);
+        }
+      }
+      if (recurrence === "monthly") {
+        const day = nextDate.getDate();
+        nextDate.setDate(1);
+        nextDate.setMonth(nextDate.getMonth() + 1);
+        const lastDay = new Date(nextDate.getFullYear(), nextDate.getMonth() + 1, 0).getDate();
+        nextDate.setDate(Math.min(day, lastDay));
+      }
+      return localDateKey(nextDate);
+    }
+
+    function expandRecurrence(task, startAfterDate = task.scheduleDate) {
+      if (task.recurrence === "none" || !task.recurrenceUntil || !task.scheduleDate) return [];
+      if (task.recurrence === "weekly_custom" && !task.recurrenceDays?.length) return [];
+      const occurrences = [];
+      let occurrenceDate = startAfterDate < task.scheduleDate ? task.scheduleDate : startAfterDate;
+      while (occurrenceDate < task.recurrenceUntil && occurrences.length < 366) {
+        occurrenceDate = nextRecurrenceDate(occurrenceDate, task.recurrence, task.recurrenceDays);
+        if (occurrenceDate > task.recurrenceUntil) break;
+        const dueOffset = task.dueDate
+          ? Math.round((new Date(`${task.dueDate}T00:00:00`) - new Date(`${task.scheduleDate}T00:00:00`)) / 86400000)
+          : null;
+        const dueDate = dueOffset === null ? "" : localDateKey(new Date(new Date(`${occurrenceDate}T00:00:00`).getTime() + dueOffset * 86400000));
+        occurrences.push({
+          ...task,
+          id: createUuid(),
+          seriesId: task.seriesId || task.id,
+          scheduleDate: occurrenceDate,
+          dueDate,
+          recurrence: "none",
+          recurrenceUntil: "",
+          recurrenceDays: [],
+          done: false,
+          status: "todo",
+          actualMinutes: null,
+          createdAt: new Date().toISOString(),
+          completedAt: "",
+          reminderNotified: ""
+        });
+      }
+      return occurrences;
+    }
+
+    function findScheduleConflicts(task, candidates = tasks) {
+      if (task.done || task.status === "done" || !task.scheduleDate || !task.startTime) return [];
+      const start = task.startTime.split(":").reduce((hours, minutes) => hours * 60 + Number(minutes), 0);
+      const end = start + task.minutes;
+      return candidates.filter((other) => {
+        if (other.id === task.id || other.done || other.status === "done" || other.scheduleDate !== task.scheduleDate || !other.startTime) return false;
+        if ((other.seriesId || other.id) === (task.seriesId || task.id) && other.recurrence !== "none" && task.recurrence !== "none") return false;
+        const otherStart = other.startTime.split(":").reduce((hours, minutes) => hours * 60 + Number(minutes), 0);
+        return start < otherStart + other.minutes && otherStart < end;
+      });
+    }
+
+    function isHardScheduleConflict(task, other) {
+      if (task.certainty === "tentative" || other.certainty === "tentative") return false;
+      return task.conflictPolicy === "strict" || other.conflictPolicy === "strict";
+    }
+
+    function hasScheduleConflict(task) {
+      return findScheduleConflicts(task).length > 0;
+    }
+
+    function findDuplicateTasks(candidate) {
+      const title = normalizedText(candidate.title);
+      if (!title) return [];
+      return tasks.filter((task) => task.id !== editingTaskId && task.status !== "done" && !task.done
+        && normalizedText(task.title) === title
+        && (task.groupId || "") === (candidate.groupId || "")
+        && (task.scheduleDate || "") === (candidate.scheduleDate || ""));
+    }
+
+    function updateDuplicateWarning() {
+      const warning = document.querySelector("#duplicate-warning");
+      const duplicates = findDuplicateTasks({ title: input.value, groupId: groupInput.value, scheduleDate: scheduleDate.value });
+      warning.textContent = duplicates.length
+        ? `Đã có công việc cùng tên trong nhóm và ngày này: ${duplicates.map((task) => `“${task.title}”`).join(", ")}. Khi lưu, app sẽ hỏi bạn có muốn tạo thêm bản trùng không.`
+        : "";
+      warning.classList.toggle("visible", duplicates.length > 0);
+    }
+
+    function getVisibleTasks() {
+      let visible = tasks.filter((task) => {
+        if (activeView === "today") return isTodayTask(task) || (task.status === "done" && isToday(task.completedAt));
+        if (activeView === "calendar") return task.scheduleDate === calendarSelectedDate || task.dueDate === calendarSelectedDate;
+        if (activeView === "upcoming") return isUpcomingTask(task);
+        if (activeView === "overdue") return isOverdue(task);
+        if (activeView === "deadlines") return !task.done && Boolean(task.dueDate);
+        if (activeView === "completed") return task.status === "done";
+        if (activeView === "period") return isTaskInPeriod(task, activePeriod);
+        return true;
+      });
+      if (activeFilter === "open") visible = visible.filter((task) => !task.done);
+      if (activeFilter === "high") visible = visible.filter((task) => task.priority === "high");
+      if (activeGroupId) visible = visible.filter((task) => task.groupId === activeGroupId);
+      const query = searchInput.value.trim().toLocaleLowerCase("vi");
+      if (query) visible = visible.filter((task) => `${task.title} ${task.notes}`.toLocaleLowerCase("vi").includes(query));
+      return visible.sort((a, b) => Number(a.status === "done") - Number(b.status === "done") || Number(isOverdue(b)) - Number(isOverdue(a)) || ({ high: 0, medium: 1, low: 2 }[a.priority] - { high: 0, medium: 1, low: 2 }[b.priority]) || (a.dueDate || "9999").localeCompare(b.dueDate || "9999"));
+    }
+
+    function renderCalendar() {
+      const panel = document.querySelector("#calendar-panel");
+      panel.hidden = activeView !== "calendar";
+      if (panel.hidden) return;
+      document.querySelector("#calendar-month-label").textContent = formatDate(calendarMonth, { month: "long", year: "numeric" });
+      const [year, month] = [calendarMonth.getFullYear(), calendarMonth.getMonth()];
+      const firstWeekday = (new Date(year, month, 1).getDay() + 6) % 7;
+      const gridStart = new Date(year, month, 1 - firstWeekday);
+      const grid = document.querySelector("#calendar-grid");
+      grid.replaceChildren();
+      for (let offset = 0; offset < 42; offset += 1) {
+        const date = new Date(gridStart);
+        date.setDate(gridStart.getDate() + offset);
+        const key = localDateKey(date);
+        const dayTasks = tasks.filter((task) => task.scheduleDate === key || task.dueDate === key);
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `calendar-day${date.getMonth() !== month ? " outside" : ""}${key === calendarSelectedDate ? " selected" : ""}${key === today ? " today" : ""}${dayTasks.length ? " has-tasks" : ""}`;
+        button.setAttribute("role", "gridcell");
+        button.setAttribute("aria-label", `${formatDate(date)}${dayTasks.length ? `, ${dayTasks.length} công việc` : ", không có công việc"}`);
+        button.setAttribute("aria-pressed", String(key === calendarSelectedDate));
+        const number = document.createElement("span");
+        number.className = "calendar-day-number";
+        number.textContent = date.getDate();
+        button.append(number);
+        if (dayTasks.length) {
+          const count = document.createElement("span");
+          count.className = "calendar-day-count";
+          count.textContent = `${dayTasks.length} việc`;
+          button.append(count);
+        }
+        button.addEventListener("click", () => {
+          calendarSelectedDate = key;
+          scheduleDate.value = key;
+          taskDate.value = key;
+          render();
+        });
+        grid.append(button);
+      }
+      const selectedTasks = tasks.filter((task) => task.scheduleDate === calendarSelectedDate || task.dueDate === calendarSelectedDate);
+      document.querySelector("#calendar-selected-summary").textContent = `${selectedTasks.length} việc`;
+      document.querySelector("#calendar-selected-label").textContent = `${formatDate(new Date(`${calendarSelectedDate}T00:00:00`))} · ${selectedTasks.length ? `${selectedTasks.length} công việc` : "Chưa có công việc"}`;
+    }
+
+    function escapeCalendarText(value) {
+      return String(value || "").replace(/\\/g, "\\\\").replace(/\r?\n/g, "\\n").replace(/,/g, "\\,").replace(/;/g, "\\;");
+    }
+
+    function exportCalendar() {
+      const year = calendarMonth.getFullYear();
+      const month = calendarMonth.getMonth();
+      const monthKey = `${year}-${String(month + 1).padStart(2, "0")}`;
+      const events = tasks.filter((task) => {
+        const date = task.scheduleDate || task.dueDate;
+        return !task.done && date && date.startsWith(monthKey);
+      });
+      if (!events.length) {
+        showToast("Không có công việc chưa hoàn thành trong tháng này để xuất.");
+        return;
+      }
+      const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Nep Personal Tasks//VI", "CALSCALE:GREGORIAN", "METHOD:PUBLISH"];
+      const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+      events.forEach((task) => {
+        const date = task.scheduleDate || task.dueDate;
+        const time = task.startTime || task.deadlineTime;
+        lines.push("BEGIN:VEVENT", `UID:${task.id}@nep.local`, `DTSTAMP:${stamp}`, `SUMMARY:${escapeCalendarText(task.title)}`);
+        lines.push(task.certainty === "tentative" ? "STATUS:TENTATIVE" : "STATUS:CONFIRMED");
+        if (task.certainty === "tentative") lines.push("TRANSP:TRANSPARENT");
+        if (task.notes) lines.push(`DESCRIPTION:${escapeCalendarText(task.notes)}`);
+        if (time) {
+          const [hours, minutes] = time.split(":").map(Number);
+          const start = new Date(`${date}T00:00:00`);
+          start.setHours(hours, minutes, 0, 0);
+          const end = new Date(start);
+          end.setMinutes(end.getMinutes() + task.minutes);
+          const calDateTime = (value) => `${localDateKey(value).replace(/-/g, "")}T${String(value.getHours()).padStart(2, "0")}${String(value.getMinutes()).padStart(2, "0")}00`;
+          lines.push(`DTSTART:${calDateTime(start)}`, `DTEND:${calDateTime(end)}`);
+          lines.push("BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:Nhắc lịch công việc", "TRIGGER:-PT15M", "END:VALARM");
+        } else {
+          const end = new Date(`${date}T00:00:00`);
+          end.setDate(end.getDate() + 1);
+          lines.push(`DTSTART;VALUE=DATE:${date.replace(/-/g, "")}`, `DTEND;VALUE=DATE:${localDateKey(end).replace(/-/g, "")}`);
+        }
+        lines.push("END:VEVENT");
+      });
+      lines.push("END:VCALENDAR");
+      const file = new Blob([lines.join("\r\n")], { type: "text/calendar;charset=utf-8" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(file);
+      link.download = `${appSettings.appName.toLocaleLowerCase("vi").replace(/[^a-z0-9]+/g, "-")}-${monthKey}.ics`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+      showToast(`Đã xuất ${events.length} sự kiện lịch.`);
+    }
+
+    function getTaskMilestone(task, now = new Date(), deadlineOnly = false) {
+      if (task.status === "done" || task.done) return null;
+      const milestones = [];
+      const startDate = task.scheduleDate || task.dueDate;
+      if (startDate && task.startTime) milestones.push({
+        task,
+        type: "start",
+        label: "Giờ bắt đầu",
+        time: new Date(`${startDate}T${task.startTime}:00`)
+      });
+      else if (task.scheduleDate) milestones.push({
+        task,
+        type: "schedule",
+        label: "Kế hoạch trong ngày",
+        time: new Date(`${task.scheduleDate}T23:59:59`)
+      });
+      if (task.dueDate) milestones.push({
+        task,
+        type: "deadline",
+        label: "Deadline",
+        time: new Date(`${task.dueDate}T${task.deadlineTime || "23:59"}:${task.deadlineTime ? "00" : "59"}`)
+      });
+      const relevant = deadlineOnly ? milestones.filter((milestone) => milestone.type === "deadline") : milestones;
+      const upcoming = relevant.filter((milestone) => milestone.time > now).sort((first, second) => first.time - second.time);
+      if (upcoming.length) return { ...upcoming[0], overdue: false };
+      if (isOverdue(task)) {
+        const deadline = relevant.find((milestone) => milestone.type === "deadline");
+        if (deadline) return { ...deadline, overdue: true };
+      }
+      return null;
+    }
+
+    function isUpcomingTask(task, now = new Date()) {
+      const milestone = getTaskMilestone(task, now);
+      return Boolean(milestone && !milestone.overdue && milestone.time - now <= 48 * 60 * 60 * 1000);
+    }
+
+    function getDeadlineMilestones(now = new Date()) {
+      return tasks.filter((task) => !task.done && task.dueDate)
+        .map((task) => getTaskMilestone(task, now, true))
+        .filter((milestone) => milestone && !milestone.overdue && milestone.time - now <= 48 * 60 * 60 * 1000)
+        .sort((first, second) => Number(first.overdue) - Number(second.overdue) || (first.overdue ? second.time - first.time : first.time - second.time));
+    }
+
+    function renderDeadlinePreview(now = new Date()) {
+      const deadlines = getDeadlineMilestones(now);
+      const panel = document.querySelector("#deadline-preview");
+      panel.hidden = deadlines.length === 0;
+      if (!deadlines.length) return;
+      document.querySelector("#deadline-preview-title").textContent = `${deadlines.length} deadline trong 48 giờ tới`;
+      const list = document.querySelector("#deadline-preview-list");
+      list.replaceChildren();
+      deadlines.slice(0, 5).forEach((milestone) => {
+        const item = document.createElement("li");
+        item.className = "deadline-preview-item";
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "deadline-preview-task";
+        button.dataset.taskId = milestone.task.id;
+        const name = document.createElement("span");
+        name.className = "deadline-preview-name";
+        name.textContent = milestone.task.title;
+        const meta = document.createElement("span");
+        meta.className = "deadline-preview-meta";
+        meta.textContent = `${formatDate(milestone.time, { weekday: "short", day: "numeric", month: "short" })}${milestone.task.deadlineTime ? ` · ${milestone.task.deadlineTime}` : " · Cuối ngày"} · ${milestone.task.priority === "high" ? "Ưu tiên cao" : milestone.task.priority === "medium" ? "Ưu tiên vừa" : "Ưu tiên thấp"}`;
+        const timer = document.createElement("span");
+        timer.className = `deadline-preview-timer${milestone.overdue || milestone.time - now <= 15 * 60 * 1000 ? " urgent" : ""}`;
+        timer.dataset.deadlineCountdownTask = milestone.task.id;
+        button.append(name, meta, timer);
+        item.append(button);
+        list.append(item);
+      });
+      list.querySelectorAll(".deadline-preview-task").forEach((button) => button.addEventListener("click", () => showTask(button.dataset.taskId, "deadlines")));
+    }
+
+    function formatCountdown(milliseconds) {
+      const totalSeconds = Math.floor(Math.abs(milliseconds) / 1000);
+      const days = Math.floor(totalSeconds / 86400);
+      const hours = Math.floor((totalSeconds % 86400) / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+      if (days) return `${days} ngày ${String(hours).padStart(2, "0")} giờ`;
+      return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    }
+
+    function refreshCountdowns(now = new Date()) {
+      document.querySelectorAll("[data-countdown-task]").forEach((element) => {
+        const task = tasks.find((item) => item.id === element.dataset.countdownTask);
+        const milestone = task && getTaskMilestone(task, now, element.dataset.countdownType === "deadline");
+        if (!milestone) {
+          element.textContent = "";
+          element.classList.remove("urgent", "late");
+          return;
+        }
+        const remaining = milestone.time - now;
+        element.textContent = milestone.overdue ? `Trễ ${formatCountdown(remaining)}` : `${milestone.label}: ${formatCountdown(remaining)}`;
+        element.classList.toggle("late", milestone.overdue);
+        element.classList.toggle("urgent", !milestone.overdue && remaining <= 15 * 60 * 1000);
+      });
+      document.querySelectorAll("[data-deadline-countdown-task]").forEach((element) => {
+        const task = tasks.find((item) => item.id === element.dataset.deadlineCountdownTask);
+        const milestone = task && getTaskMilestone(task, now, true);
+        if (!milestone) return;
+        const remaining = milestone.time - now;
+        element.textContent = milestone.overdue ? `Trễ ${formatCountdown(remaining)}` : formatCountdown(remaining);
+        element.classList.toggle("urgent", milestone.overdue || remaining <= 15 * 60 * 1000);
+      });
+
+      const upcoming = tasks.filter((task) => !task.done).map((task) => getTaskMilestone(task, now)).filter(Boolean)
+        .sort((first, second) => Number(first.overdue) - Number(second.overdue) || (first.overdue ? second.time - first.time : first.time - second.time));
+      const upcomingDeadlines = getDeadlineMilestones(now);
+      const panel = document.querySelector("#next-alert");
+      const milestone = upcoming[0];
+      panel.hidden = !milestone;
+      if (!milestone) return;
+      const remaining = milestone.time - now;
+      document.querySelector("#next-alert-label").textContent = milestone.overdue ? "ĐANG TRỄ HẠN" : remaining <= 15 * 60 * 1000 ? `SẮP ĐẾN · ${milestone.label.toLocaleUpperCase("vi")}` : milestone.label.toLocaleUpperCase("vi");
+      document.querySelector("#next-alert-title").textContent = milestone.task.title;
+      const countdown = document.querySelector("#next-alert-countdown");
+      countdown.textContent = milestone.overdue ? `Trễ ${formatCountdown(remaining)}` : `Còn ${formatCountdown(remaining)}`;
+      countdown.classList.toggle("urgent", milestone.overdue || remaining <= 15 * 60 * 1000);
+      const otherDeadlines = Math.max(0, upcomingDeadlines.length - Number(milestone.type === "deadline"));
+      document.querySelector("#next-alert-count").textContent = otherDeadlines ? `+${otherDeadlines} deadline khác` : "";
+      document.querySelector("#next-alert-button").dataset.taskId = milestone.task.id;
+    }
+
+    function showTask(taskId, view = "all") {
+      activeView = view;
+      activeFilter = "all";
+      activeGroupId = "";
+      groupFilter.value = "";
+      render();
+      document.querySelector(`[data-task-id="${CSS.escape(taskId)}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    function makeTaskRow(task, index) {
+      const row = document.createElement("article");
+      row.className = `task-row${task.done ? " is-done" : ""}`;
+      row.dataset.taskId = task.id;
+      row.style.animationDelay = `${Math.min(index, 8) * 35}ms`;
+      const status = document.createElement("select");
+      status.className = "task-status";
+      status.setAttribute("aria-label", `Trạng thái: ${task.title}`);
+      [["todo", "Cần làm"], ["in_progress", "Đang làm"], ["done", "Hoàn thành"]].forEach(([value, label]) => status.add(new Option(label, value)));
+      status.value = task.status || (task.done ? "done" : "todo");
+      status.addEventListener("change", async () => {
+        const wasDone = task.status === "done" || task.done;
+        task.status = status.value;
+        task.done = task.status === "done";
+        task.completedAt = task.done ? new Date().toISOString() : "";
+        await save({ task });
+        if (!wasDone && task.done && task.recurrence !== "none" && !task.recurrenceUntil) await createNextOccurrence(task);
+        if (!wasDone && task.done) showToast("Đã hoàn thành. Ghi nhận một bước tiến!");
+      });
+
+      const content = document.createElement("div");
+      const title = document.createElement("div");
+      title.className = "task-title";
+      title.textContent = task.title;
+      const meta = document.createElement("div");
+      meta.className = "task-meta";
+      const priority = document.createElement("span");
+      priority.className = `priority ${task.priority}`;
+      priority.textContent = { high: "Ưu tiên cao", medium: "Ưu tiên vừa", low: "Ưu tiên thấp" }[task.priority];
+      const duration = document.createElement("span");
+      duration.textContent = `${task.minutes} phút`;
+      meta.append(priority, duration);
+      if (task.actualMinutes !== null && task.actualMinutes !== undefined) {
+        const actual = document.createElement("span");
+        actual.className = "planned-actual";
+        actual.textContent = `Thực tế ${task.actualMinutes} phút`;
+        meta.append(actual);
+      }
+      if (task.recurrence !== "none") {
+        const recurrence = document.createElement("span");
+        recurrence.className = "planned-actual";
+        const recurrenceLabel = task.recurrence === "weekly_custom"
+          ? `mỗi tuần ${["T2", "T3", "T4", "T5", "T6", "T7", "CN"].filter((_day, index) => task.recurrenceDays?.includes(index)).join(", ")}`
+          : ({ daily: "hằng ngày", weekdays: "thứ Hai–thứ Sáu", weekly: "hằng tuần", monthly: "hằng tháng" })[task.recurrence];
+        recurrence.textContent = `Lặp ${recurrenceLabel}${task.recurrenceUntil ? ` đến ${formatDate(new Date(`${task.recurrenceUntil}T00:00:00`), { day: "numeric", month: "short", year: "numeric" })}` : ""}`;
+        meta.append(recurrence);
+      }
+      const countdown = document.createElement("span");
+      countdown.className = "task-countdown";
+      countdown.dataset.countdownTask = task.id;
+      countdown.dataset.countdownType = activeView === "deadlines" ? "deadline" : "nearest";
+      meta.append(countdown);
+      content.append(title, meta);
+      if (task.notes) {
+        const description = document.createElement("div");
+        description.className = "task-description";
+        description.textContent = task.notes;
+        content.append(description);
+      }
+      const tags = document.createElement("div");
+      tags.className = "task-tags";
+      const category = document.createElement("span");
+      category.className = "category-tag";
+      category.textContent = groups.find((group) => group.id === task.groupId)?.name || (task.groupId ? "Nhóm đã lưu trữ" : { work: "Cơ quan", learning: "Học online", meeting: "Cuộc họp", personal: "Cá nhân" }[task.category] || "Chưa phân nhóm");
+      tags.append(category);
+      if (task.certainty === "tentative") {
+        const certainty = document.createElement("span");
+        certainty.className = "certainty-tag tentative";
+        certainty.textContent = "Dự kiến";
+        tags.append(certainty);
+      }
+      if (isOverdue(task)) {
+        const overdue = document.createElement("span");
+        overdue.className = "overdue-tag";
+        overdue.textContent = "Quá hạn";
+        tags.append(overdue);
+      }
+      const conflicts = findScheduleConflicts(task);
+      if (conflicts.length) {
+        const conflict = document.createElement("span");
+        const hardConflict = conflicts.some((other) => isHardScheduleConflict(task, other));
+        conflict.className = `conflict-tag${hardConflict ? " hard-conflict" : ""}`;
+        conflict.textContent = `${hardConflict ? "Xung đột cứng" : "Trùng giờ"} · ${conflicts.length}`;
+        conflict.title = `Trùng với: ${conflicts.map((other) => `${other.title} (${other.certainty === "tentative" ? "dự kiến" : "đã chốt"}, ưu tiên ${other.priority})`).join("; ")}`;
+        tags.append(conflict);
+      }
+      content.append(tags);
+
+      const actions = document.createElement("div");
+      actions.className = "row-actions";
+      if (task.startTime) {
+        const time = document.createElement("span");
+        time.className = "task-times";
+        time.textContent = task.startTime;
+        actions.append(time);
+      }
+      if (task.dueDate) {
+        const due = document.createElement("span");
+        due.className = `due-label${isOverdue(task) ? " overdue" : ""}`;
+        due.textContent = `${task.dueDate === today ? "Hạn hôm nay" : formatDate(new Date(`${task.dueDate}T00:00:00`), { day: "numeric", month: "short" })}${task.deadlineTime ? ` ${task.deadlineTime}` : ""}`;
+        actions.append(due);
+      }
+      const edit = document.createElement("button");
+      edit.className = "edit-button";
+      edit.type = "button";
+      edit.textContent = "✎";
+      edit.setAttribute("aria-label", `Sửa công việc: ${task.title}`);
+      edit.title = "Sửa công việc";
+      edit.addEventListener("click", () => beginEdit(task));
+      actions.append(edit);
+      const remove = document.createElement("button");
+      remove.className = "delete-button";
+      remove.type = "button";
+      remove.textContent = "×";
+      remove.setAttribute("aria-label", `Xóa công việc: ${task.title}`);
+      remove.title = "Xóa công việc";
+      remove.addEventListener("click", () => {
+        tasks = tasks.filter((item) => item.id !== task.id);
+        if (editingTaskId === task.id) cancelEdit();
+        save({ deletedId: task.id });
+        showToast("Đã xóa công việc.");
+      });
+      actions.append(remove);
+      row.append(status, content, actions);
+      return row;
+    }
+
+    function render() {
+      const now = new Date();
+      const reportDate = activeView === "calendar" ? calendarSelectedDate : today;
+      const reportDay = new Date(`${reportDate}T00:00:00`);
+      const reportLabel = formatDate(reportDay, { day: "numeric", month: "long" });
+      const dailyTasks = tasks.filter((task) => isTaskRelevantOnDate(task, reportDate));
+      const completedToday = dailyTasks.filter((task) => task.status === "done" && taskDateKey(task.completedAt) === reportDate);
+      const completedInDailyTasks = completedToday.length;
+      const actualTodayTasks = dailyTasks.filter((task) => task.actualMinutes !== null && task.actualMinutes !== undefined);
+      const actualToday = actualTodayTasks.reduce((sum, task) => sum + task.actualMinutes, 0);
+      const percent = dailyTasks.length ? Math.round(completedInDailyTasks / dailyTasks.length * 100) : 0;
+
+      document.querySelector("#today-total").textContent = dailyTasks.length;
+      document.querySelector("#today-total-label").textContent = activeView === "calendar" ? `Công việc ngày ${reportLabel}` : "Tổng công việc hôm nay";
+      document.querySelector("#today-remaining").textContent = "công việc";
+      document.querySelector("#today-done").textContent = completedToday.length;
+      document.querySelector("#today-done-caption").textContent = activeView === "calendar" ? `hoàn thành ${reportLabel}` : "việc hôm nay";
+      document.querySelector("#today-focus").textContent = actualToday;
+      document.querySelector("#today-focus-caption").textContent = activeView === "calendar" ? `phút ngày ${reportLabel}` : "phút hôm nay";
+      document.querySelector("#today-nav-count").textContent = tasks.filter(isTodayTask).length;
+      document.querySelector("#calendar-nav-count").textContent = tasks.filter((task) => task.scheduleDate === calendarSelectedDate || task.dueDate === calendarSelectedDate).length;
+      document.querySelector("#upcoming-nav-count").textContent = tasks.filter((task) => isUpcomingTask(task, now)).length;
+      document.querySelector("#overdue-nav-count").textContent = tasks.filter(isOverdue).length;
+      document.querySelector("#deadline-nav-count").textContent = tasks.filter((task) => !task.done && task.dueDate).length;
+      document.querySelector("#all-nav-count").textContent = tasks.filter((task) => !task.done).length;
+      document.querySelector("#completed-nav-count").textContent = tasks.filter((task) => task.done).length;
+      document.querySelector("#progress-caption").textContent = `${completedInDailyTasks}/${dailyTasks.length} việc`;
+      document.querySelector("#progress-percent").textContent = `${percent}%`;
+      const progressRing = document.querySelector("#progress-ring");
+      progressRing.style.setProperty("--progress", `${percent * 3.6}deg`);
+      progressRing.style.setProperty("--remaining-color", dailyTasks.length ? "var(--coral)" : "#e9efea");
+      progressRing.setAttribute("aria-label", `Hoàn thành ${percent} phần trăm`);
+      document.querySelector("#progress-title").textContent = `${completedInDailyTasks} hoàn thành · ${dailyTasks.length - completedInDailyTasks} còn lại`;
+      document.querySelector("#progress-copy").textContent = dailyTasks.length ? `Tỷ lệ trên ${dailyTasks.length} việc phát sinh, lên lịch hoặc hoàn thành trong ngày.` : `Chưa có công việc phát sinh hoặc lên lịch ${activeView === "calendar" ? `ngày ${reportLabel}` : "hôm nay"}.`;
+      document.querySelector("#progress-heading").textContent = activeView === "calendar" ? `Nhịp độ · ${reportLabel}` : "Nhịp độ hôm nay";
+      document.querySelector("#focus-period-label").textContent = activeView === "calendar" ? reportLabel : "hôm nay";
+      document.querySelector("#focus-hours").textContent = actualToday >= 60 ? (actualToday / 60).toLocaleString("vi-VN", { maximumFractionDigits: 1 }) : actualToday;
+      document.querySelector("#focus-unit").textContent = actualToday >= 60 ? "giờ thực tế" : "phút thực tế";
+
+      const periodAnchor = activeView === "calendar" ? reportDay : now;
+      const range = periodDateRange(activePeriod, periodAnchor);
+      const periodTasks = tasks.filter((task) => isTaskRelevantInRange(task, range));
+      const completedPeriod = periodTasks.filter((task) => task.status === "done" && taskDateKey(task.completedAt) >= range.start && taskDateKey(task.completedAt) <= range.end);
+      const remainingPeriod = periodTasks.filter((task) => task.status !== "done");
+      const overduePeriod = periodTasks.filter((task) => isOverdue(task) && task.dueDate && task.dueDate <= range.end).length;
+      document.querySelector("#period-scheduled").textContent = periodTasks.length;
+      document.querySelector("#period-completed").textContent = completedPeriod.length;
+      document.querySelector("#period-remaining").textContent = remainingPeriod.length;
+      document.querySelector("#period-overdue").textContent = overduePeriod;
+      document.querySelector("#period-planned").textContent = periodTasks.reduce((sum, task) => sum + task.minutes, 0);
+      const actualLogged = periodTasks.filter((task) => task.actualMinutes !== null && task.actualMinutes !== undefined);
+      document.querySelector("#period-actual").textContent = actualLogged.length ? actualLogged.reduce((sum, task) => sum + task.actualMinutes, 0) : "—";
+      document.querySelector("#period-focus").textContent = completedPeriod.reduce((sum, task) => sum + task.minutes, 0);
+      document.querySelectorAll(".period-button").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.period === activePeriod)));
+
+      const chart = document.querySelector("#week-chart");
+      chart.replaceChildren();
+      const bucketCount = activePeriod === "month" ? Math.ceil(new Date(periodAnchor.getFullYear(), periodAnchor.getMonth() + 1, 0).getDate() / 7) : 7;
+      const chartStart = activePeriod === "day"
+        ? new Date(reportDay.getFullYear(), reportDay.getMonth(), reportDay.getDate() - 6)
+        : new Date(`${range.start}T00:00:00`);
+      const chartEnd = activePeriod === "day" ? reportDate : range.end;
+      const bucketCounts = Array.from({ length: bucketCount }, () => ({ workload: 0, completed: 0 }));
+      const getBucketIndex = (dateKey) => {
+        const date = new Date(`${dateKey}T00:00:00`);
+        if (activePeriod === "month") return Math.floor((date.getDate() - 1) / 7);
+        if (activePeriod === "week") return (date.getDay() + 6) % 7;
+        return Math.round((date - chartStart) / 86400000);
+      };
+      tasks.forEach((task) => {
+        getTaskProductivityDates(task).forEach((activityDate) => {
+          if (activityDate < localDateKey(chartStart) || activityDate > chartEnd) return;
+          const index = getBucketIndex(activityDate);
+          if (index >= 0 && index < bucketCount) bucketCounts[index].workload += 1;
+        });
+        const completedDate = task.status === "done" ? taskDateKey(task.completedAt) : "";
+        if (completedDate && completedDate >= localDateKey(chartStart) && completedDate <= chartEnd) {
+          const index = getBucketIndex(completedDate);
+          if (index >= 0 && index < bucketCount) bucketCounts[index].completed += 1;
+        }
+      });
+      chart.style.gridTemplateColumns = `repeat(${bucketCount}, minmax(0, 1fr))`;
+      const maxCount = Math.max(1, ...bucketCounts.flatMap((count) => [count.workload, count.completed]));
+      bucketCounts.forEach((count, index) => {
+        const column = document.createElement("div");
+        const isCurrent = activePeriod === "month" ? index === Math.floor((reportDay.getDate() - 1) / 7) : activePeriod === "week" ? index === (reportDay.getDay() + 6) % 7 : index === 6;
+        column.className = `chart-day${isCurrent ? " today" : ""}`;
+        const track = document.createElement("div");
+        track.className = "bar-track";
+        [["workload", "Tổng việc"], ["completed", "Hoàn thành"]].forEach(([type, label]) => {
+          const bar = document.createElement("div");
+          bar.className = `bar bar-${type === "workload" ? "added" : type}`;
+          bar.style.height = `${Math.max(count[type] ? 8 : 3, count[type] / maxCount * 72)}px`;
+          bar.title = type === "workload" ? `${count[type]} việc trong ngày` : `${count[type]} việc hoàn thành`;
+          track.append(bar);
+        });
+        const label = document.createElement("span");
+        label.className = "chart-label";
+        if (activePeriod === "month") label.textContent = `${index * 7 + 1}-${Math.min(index * 7 + 7, new Date(periodAnchor.getFullYear(), periodAnchor.getMonth() + 1, 0).getDate())}`;
+        else if (activePeriod === "week") label.textContent = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"][index];
+        else {
+          const day = new Date(chartStart);
+          day.setDate(day.getDate() + index);
+          label.textContent = formatDate(day, { weekday: "narrow" });
+        }
+        column.append(track, label);
+        chart.append(column);
+      });
+      document.querySelector("#focus-note").textContent = actualLogged.length ? `${actualLogged.length} việc đã ghi thời gian thực tế.` : "Nhập phút đã dùng khi thêm hoặc sửa công việc.";
+
+      document.querySelectorAll(".nav-item").forEach((button) => {
+        if (button.dataset.view === activeView) button.setAttribute("aria-current", "page");
+        else button.removeAttribute("aria-current");
+      });
+      document.querySelectorAll(".filter-button").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.filter === activeFilter)));
+      document.querySelector("#tasks-heading").textContent = { today: "Việc của bạn", calendar: `Công việc · ${formatDate(new Date(`${calendarSelectedDate}T00:00:00`))}`, upcoming: "Việc sắp tới", overdue: "Công việc quá hạn", deadlines: "Tất cả deadline", all: "Tất cả công việc", completed: "Đã hoàn thành", period: `Công việc trong ${activePeriod === "day" ? "ngày" : activePeriod === "week" ? "tuần" : "tháng"}` }[activeView];
+      document.querySelector("#list-caption").textContent = { today: "Việc đã lên lịch cho hôm nay.", calendar: "Lịch tháng và các công việc trong ngày đang chọn.", upcoming: "Việc có mốc kế hoạch hoặc deadline trong 48 giờ tới.", overdue: "Việc trễ hạn được đưa lên đầu danh sách.", deadlines: "Mọi deadline chưa hoàn thành, đếm ngược và xếp hạn gần nhất lên trước.", all: "Toàn bộ danh sách của bạn.", completed: "Nhìn lại những điều bạn đã làm được.", period: "Danh sách và chỉ số đang dùng cùng một khoảng thời gian." }[activeView];
+      const deadlineNote = document.querySelector("#task-view-note");
+      deadlineNote.hidden = activeView !== "deadlines";
+      deadlineNote.textContent = activeView === "deadlines" ? `${tasks.filter((task) => !task.done && task.dueDate).length} deadline · ưu tiên cao được sắp lên trước nếu cùng hạn.` : "";
+      const visible = getVisibleTasks();
+      document.querySelector("#visible-count").textContent = `${visible.length} việc`;
+      list.replaceChildren();
+      if (!visible.length) {
+        const empty = document.createElement("div");
+        empty.className = "empty-state";
+        const mark = document.createElement("div");
+        mark.className = "empty-mark";
+        mark.textContent = activeView === "completed" ? "✓" : "✳";
+        const message = document.createElement("div");
+        message.textContent = searchInput.value ? "Không tìm thấy công việc phù hợp." : activeView === "today" ? "Hôm nay chưa có việc nào. Thêm một việc ở phía trên nhé." : activeView === "upcoming" ? "Chưa có việc nào đến hạn hoặc được lên lịch trong 48 giờ tới." : activeView === "overdue" ? "Không có việc nào đang trễ hạn." : activeView === "deadlines" ? "Chưa có công việc nào có deadline." : activeView === "completed" ? "Việc hoàn thành sẽ xuất hiện ở đây." : "Danh sách đang trống. Hãy ghi lại điều đầu tiên bạn muốn làm.";
+        empty.append(mark, message);
+        list.append(empty);
+      } else {
+        visible.forEach((task, index) => list.append(makeTaskRow(task, index)));
+      }
+      renderCalendar();
+      renderDeadlinePreview();
+      refreshCountdowns();
+    }
+
+    function showToast(message) {
+      const toast = document.querySelector("#toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("visible"), 2200);
+    }
+
+    function applyTaskFormMode(mode) {
+      activeTaskMode = mode;
+      form.classList.toggle("quick-mode", mode === "quick");
+      modeButtons.forEach((button) => {
+        const isActive = button.dataset.taskMode === mode;
+        button.classList.toggle("is-active", isActive);
+        button.setAttribute("aria-pressed", String(isActive));
+      });
+    }
+
+    function beginEdit(task) {
+      editingTaskId = task.id;
+      input.value = task.title;
+      notesInput.value = task.notes;
+      groupInput.value = task.groupId || "";
+      if (task.groupId && ![...groupInput.options].some((option) => option.value === task.groupId)) {
+        const archived = groups.find((group) => group.id === task.groupId);
+        if (archived) groupInput.add(new Option(`${archived.name} (đã lưu trữ)`, archived.id));
+      }
+      scheduleDate.value = task.scheduleDate;
+      startTimeInput.value = task.startTime;
+      taskDate.value = task.dueDate;
+      deadlineTimeInput.value = task.deadlineTime;
+      priorityInput.value = task.priority;
+      recurrenceInput.value = task.recurrence || "none";
+      recurrenceUntilInput.value = task.recurrenceUntil || "";
+      recurrenceUntilInput.disabled = task.recurrence === "none";
+      recurrenceUntilInput.required = task.recurrence !== "none";
+      recurrenceDaysInput.hidden = task.recurrence !== "weekly_custom";
+      recurrenceDayCheckboxes.forEach((checkbox) => { checkbox.checked = (task.recurrenceDays || []).includes(Number(checkbox.value)); });
+      certaintyInput.value = task.certainty || "confirmed";
+      conflictPolicyInput.value = task.conflictPolicy || "prefer";
+      minutesInput.value = task.minutes;
+      actualMinutesInput.value = task.actualMinutes ?? "";
+      const shouldUseDetail = Boolean(task.scheduleDate || task.startTime || task.dueDate || task.deadlineTime || task.recurrence !== "none" || task.minutes || task.actualMinutes);
+      applyTaskFormMode(shouldUseDetail ? "detail" : "quick");
+      document.querySelector("#cancel-edit").hidden = false;
+      document.querySelector(".submit-button").textContent = "Lưu thay đổi";
+      updateScheduleWarning();
+      input.focus();
+      document.querySelector(".add-form").scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    function cancelEdit() {
+      editingTaskId = "";
+      form.reset();
+      scheduleDate.value = "";
+      taskDate.value = "";
+      minutesInput.value = 25;
+      recurrenceUntilInput.disabled = true;
+      recurrenceUntilInput.required = false;
+      recurrenceDaysInput.hidden = true;
+      recurrenceDayCheckboxes.forEach((checkbox) => { checkbox.checked = false; });
+      certaintyInput.value = "confirmed";
+      conflictPolicyInput.value = "prefer";
+      applyTaskFormMode("quick");
+      document.querySelector("#cancel-edit").hidden = true;
+      document.querySelector(".submit-button").textContent = "+ Thêm việc";
+      updateScheduleWarning();
+      updateDuplicateWarning();
+    }
+
+    modeButtons.forEach((button) => {
+      button.addEventListener("click", () => applyTaskFormMode(button.dataset.taskMode));
+    });
+
+    document.querySelector("#top-date").textContent = formatDate(new Date(), { day: "numeric", month: "long", year: "numeric" });
+    document.querySelector("#date-chip").textContent = formatDate(new Date());
+    taskDate.value = today;
+    scheduleDate.value = today;
+    document.querySelector("#cancel-edit").addEventListener("click", cancelEdit);
+    document.querySelector("#identity-button").addEventListener("click", () => document.querySelector("#identity-dialog").showModal());
+    document.querySelector("#identity-button-top").addEventListener("click", () => document.querySelector("#identity-dialog").showModal());
+    document.querySelector("#cancel-identity").addEventListener("click", () => document.querySelector("#identity-dialog").close());
+    document.querySelector("#identity-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      try {
+        await persistAppSettings({
+          ownerName: document.querySelector("#owner-name-input").value,
+          appName: document.querySelector("#app-name-input").value
+        });
+        document.querySelector("#identity-dialog").close();
+        showToast("Đã cập nhật thông tin không gian.");
+      } catch (error) {
+        showToast(`Không thể lưu thông tin: ${error.message}`);
+      }
+    });
+
+    function updateScheduleWarning() {
+      const warning = document.querySelector("#schedule-warning");
+      const candidate = {
+        id: editingTaskId || "new-task",
+        seriesId: editingTaskId ? tasks.find((task) => task.id === editingTaskId)?.seriesId : "new-task",
+        scheduleDate: scheduleDate.value,
+        startTime: startTimeInput.value,
+        minutes: Number(minutesInput.value) || 25,
+        certainty: certaintyInput.value,
+        conflictPolicy: conflictPolicyInput.value,
+        recurrence: recurrenceInput.value,
+        recurrenceUntil: recurrenceUntilInput.value,
+        recurrenceDays: recurrenceDayCheckboxes.filter((checkbox) => checkbox.checked).map((checkbox) => Number(checkbox.value))
+      };
+      const existing = tasks.find((task) => task.id === editingTaskId);
+      const seriesId = existing?.seriesId || existing?.id;
+      const ignoreIds = new Set(existing ? [existing.id] : []);
+      if (existing && seriesId === existing.id) tasks.filter((task) => task.id !== existing.id && (task.seriesId || task.id) === seriesId && task.status !== "done").forEach((task) => ignoreIds.add(task.id));
+      const conflictPool = tasks.filter((task) => !ignoreIds.has(task.id));
+      const recurrenceStart = existing && seriesId === existing.id && candidate.scheduleDate < today ? today : candidate.scheduleDate;
+      const planned = [candidate, ...expandRecurrence(candidate, recurrenceStart)];
+      const conflicts = [];
+      const earlier = [];
+      planned.forEach((plannedTask) => {
+        findScheduleConflicts(plannedTask, [...conflictPool, ...earlier]).forEach((other) => conflicts.push({ date: plannedTask.scheduleDate, other, hard: isHardScheduleConflict(plannedTask, other), tentative: plannedTask.certainty === "tentative" }));
+        earlier.push(plannedTask);
+      });
+      const hardConflicts = conflicts.filter((entry) => entry.hard);
+      const message = hardConflicts.length
+        ? "Không thể lưu lịch đã chốt: "
+        : candidate.certainty === "tentative"
+          ? "Lịch dự kiến không khóa lịch đã chốt, nhưng đang trùng với: "
+          : candidate.conflictPolicy === "allow"
+            ? "Quy tắc cho phép trùng giờ với: "
+            : "Có thể trùng khung giờ với: ";
+      warning.textContent = conflicts.length
+        ? `${message}${conflicts.map(({ other, date }) => `“${other.title}” ngày ${formatDate(new Date(`${date}T00:00:00`), { day: "numeric", month: "short" })} (${other.certainty === "tentative" ? "dự kiến" : "đã chốt"}, ưu tiên ${other.priority})`).join(", ")}. ${hardConflicts.length ? "Đổi giờ hoặc chuyển thành lịch dự kiến." : candidate.certainty === "tentative" || candidate.conflictPolicy === "allow" ? "Có thể lưu mà không chặn lịch kia." : "Khi lưu app sẽ hỏi xác nhận."}`
+        : "";
+      warning.classList.toggle("visible", conflicts.length > 0);
+      warning.classList.toggle("hard-conflict", hardConflicts.length > 0);
+    }
+
+    [scheduleDate, startTimeInput, minutesInput].forEach((field) => field.addEventListener("input", updateScheduleWarning));
+    [scheduleDate, startTimeInput, minutesInput].forEach((field) => field.addEventListener("change", updateScheduleWarning));
+    recurrenceInput.addEventListener("change", () => {
+      const repeating = recurrenceInput.value !== "none";
+      recurrenceUntilInput.disabled = !repeating;
+      recurrenceUntilInput.required = repeating;
+      recurrenceDaysInput.hidden = recurrenceInput.value !== "weekly_custom";
+      if (recurrenceInput.value !== "weekly_custom") recurrenceDayCheckboxes.forEach((checkbox) => { checkbox.checked = false; });
+      recurrenceUntilInput.min = scheduleDate.value || today;
+      if (repeating && !recurrenceUntilInput.value) recurrenceUntilInput.value = scheduleDate.value || today;
+      updateScheduleWarning();
+    });
+    [certaintyInput, conflictPolicyInput].forEach((field) => field.addEventListener("change", updateScheduleWarning));
+    scheduleDate.addEventListener("change", () => {
+      recurrenceUntilInput.min = scheduleDate.value || today;
+      if (recurrenceInput.value !== "none" && recurrenceUntilInput.value < scheduleDate.value) recurrenceUntilInput.value = scheduleDate.value;
+      updateScheduleWarning();
+    });
+    recurrenceUntilInput.addEventListener("change", updateScheduleWarning);
+    recurrenceDayCheckboxes.forEach((checkbox) => checkbox.addEventListener("change", updateScheduleWarning));
+    [input, groupInput, scheduleDate].forEach((field) => field.addEventListener("input", updateDuplicateWarning));
+    [groupInput, scheduleDate].forEach((field) => field.addEventListener("change", updateDuplicateWarning));
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const title = input.value.trim();
+      if (!title) return;
+      const isQuickMode = activeTaskMode === "quick";
+      const duplicates = findDuplicateTasks({ title, groupId: groupInput.value, scheduleDate: scheduleDate.value });
+      if (!isQuickMode && duplicates.length && !window.confirm(`Có ${duplicates.length} công việc trùng tên, nhóm và ngày. Bạn vẫn muốn tạo công việc này chứ?`)) return;
+      if (!isQuickMode && recurrenceInput.value !== "none" && (!recurrenceUntilInput.value || recurrenceUntilInput.value < scheduleDate.value)) {
+        showToast("Chọn ngày kết thúc lặp lại bằng hoặc sau ngày thực hiện.");
+        recurrenceUntilInput.focus();
+        return;
+      }
+      if (!isQuickMode) {
+        const recurrenceDays = recurrenceInput.value === "weekly_custom"
+          ? recurrenceDayCheckboxes.filter((checkbox) => checkbox.checked).map((checkbox) => Number(checkbox.value))
+          : [];
+        if (recurrenceInput.value === "weekly_custom" && !recurrenceDays.length) {
+          showToast("Chọn ít nhất một ngày trong tuần để lặp.");
+          recurrenceDaysInput.focus();
+          return;
+        }
+      }
+      const values = {
+        title,
+        notes: notesInput.value.trim(),
+        groupId: groupInput.value,
+        dueDate: taskDate.value,
+        scheduleDate: scheduleDate.value,
+        startTime: isQuickMode ? "" : startTimeInput.value,
+        deadlineTime: isQuickMode ? "" : deadlineTimeInput.value,
+        priority: priorityInput.value,
+        recurrence: isQuickMode ? "none" : recurrenceInput.value,
+        recurrenceUntil: isQuickMode ? "" : recurrenceUntilInput.value,
+        recurrenceDays: isQuickMode ? [] : (recurrenceInput.value === "weekly_custom" ? recurrenceDayCheckboxes.filter((checkbox) => checkbox.checked).map((checkbox) => Number(checkbox.value)) : []),
+        certainty: isQuickMode ? "confirmed" : certaintyInput.value,
+        conflictPolicy: isQuickMode ? "allow" : conflictPolicyInput.value,
+        minutes: isQuickMode ? 25 : Math.min(600, Math.max(5, Number(minutesInput.value) || 25)),
+        actualMinutes: isQuickMode ? null : (actualMinutesInput.value === "" ? null : Math.min(6000, Math.max(0, Number(actualMinutesInput.value) || 0)))
+      };
+      const existingTask = tasks.find((item) => item.id === editingTaskId);
+      const taskId = existingTask?.id || createUuid();
+      const isSeriesMaster = Boolean(existingTask && (existingTask.seriesId || existingTask.id) === existingTask.id);
+      const candidate = {
+        ...(existingTask || {}),
+        ...values,
+        id: taskId,
+        seriesId: existingTask && !isSeriesMaster && values.recurrence === "none" ? existingTask.seriesId || existingTask.id : taskId,
+        done: existingTask?.done || false,
+        status: existingTask?.status || "todo",
+        createdAt: existingTask?.createdAt || new Date().toISOString(),
+        completedAt: existingTask?.completedAt || "",
+        reminderNotified: ""
+      };
+      const oldPendingSeriesTasks = isSeriesMaster
+        ? tasks.filter((task) => task.id !== existingTask.id && (task.seriesId || task.id) === candidate.seriesId && task.status !== "done")
+        : [];
+      const recurrenceStart = existingTask && isSeriesMaster ? (candidate.scheduleDate > today ? candidate.scheduleDate : today) : candidate.scheduleDate;
+      const occurrences = candidate.recurrence !== "none" && (!existingTask || isSeriesMaster)
+        ? expandRecurrence(candidate, recurrenceStart)
+        : [];
+      const plannedTasks = [candidate, ...occurrences];
+      const ignoreIds = new Set(existingTask ? [existingTask.id] : []);
+      oldPendingSeriesTasks.forEach((task) => ignoreIds.add(task.id));
+      const conflictPool = tasks.filter((task) => !ignoreIds.has(task.id));
+      const conflicts = [];
+      const earlierPlanned = [];
+      plannedTasks.forEach((plannedTask) => {
+        findScheduleConflicts(plannedTask, [...conflictPool, ...earlierPlanned]).forEach((other) => conflicts.push({ incoming: plannedTask, other }));
+        earlierPlanned.push(plannedTask);
+      });
+      const hardConflicts = conflicts.filter(({ incoming, other }) => isHardScheduleConflict(incoming, other));
+      if (hardConflicts.length) {
+        const names = [...new Set(hardConflicts.map(({ other }) => other.title))];
+        showToast(`Không thể xếp lịch đã chốt do trùng giờ với: ${names.join(", ")}. Hãy đổi giờ hoặc chuyển thành lịch dự kiến.`);
+        return;
+      }
+      const warningConflicts = conflicts.filter(({ incoming, other }) => incoming.certainty === "confirmed" && (incoming.conflictPolicy === "prefer" || other.conflictPolicy === "prefer" || (incoming.conflictPolicy === "strict" && other.certainty === "tentative")));
+      if (warningConflicts.length) {
+        const names = [...new Set(warningConflicts.map(({ other }) => `${other.title} (${other.priority === "high" ? "ưu tiên cao" : other.certainty === "tentative" ? "dự kiến" : "đã chốt"})`))];
+        if (!window.confirm(`Khung giờ có thể trùng với: ${names.join(", ")}. Bạn vẫn muốn xếp lịch không?`)) return;
+      }
+      let changedTask;
+      if (existingTask) changedTask = Object.assign(existingTask, candidate);
+      else {
+        changedTask = candidate;
+        tasks.push(changedTask);
+      }
+      if (oldPendingSeriesTasks.length) {
+        const removedIds = new Set(oldPendingSeriesTasks.map((task) => task.id));
+        tasks = tasks.filter((task) => !removedIds.has(task.id));
+      }
+      if (occurrences.length) tasks.push(...occurrences);
+      const keepCalendarView = activeView === "calendar";
+      activeView = keepCalendarView ? "calendar" : (scheduleDate.value > today || taskDate.value > today) ? "upcoming" : "today";
+      activeFilter = "all";
+      cancelEdit();
+      if (changedTask) save({ tasks: [changedTask, ...occurrences], deletedIds: oldPendingSeriesTasks.map((task) => task.id) });
+      if (occurrences.length === 365) showToast("Lịch lặp đã tạo tối đa 366 lần hẹn trong khoảng này.");
+      input.focus();
+    });
+
+    document.querySelectorAll(".nav-item").forEach((button) => button.addEventListener("click", () => {
+      activeView = button.dataset.view;
+      activeFilter = "all";
+      if (activeView === "calendar") {
+        calendarMonth = new Date(`${calendarSelectedDate}T00:00:00`);
+        calendarMonth.setDate(1);
+      }
+      render();
+    }));
+    document.querySelector("#calendar-prev").addEventListener("click", () => {
+      calendarMonth.setMonth(calendarMonth.getMonth() - 1);
+      if (calendarSelectedDate.slice(0, 7) !== `${calendarMonth.getFullYear()}-${String(calendarMonth.getMonth() + 1).padStart(2, "0")}`) calendarSelectedDate = localDateKey(calendarMonth);
+      render();
+    });
+    document.querySelector("#calendar-next").addEventListener("click", () => {
+      calendarMonth.setMonth(calendarMonth.getMonth() + 1);
+      if (calendarSelectedDate.slice(0, 7) !== `${calendarMonth.getFullYear()}-${String(calendarMonth.getMonth() + 1).padStart(2, "0")}`) calendarSelectedDate = localDateKey(calendarMonth);
+      render();
+    });
+    document.querySelector("#calendar-export-button").addEventListener("click", exportCalendar);
+    document.querySelector("#export-calendar-button").addEventListener("click", exportCalendar);
+    document.querySelectorAll(".filter-button").forEach((button) => button.addEventListener("click", () => {
+      activeFilter = button.dataset.filter;
+      render();
+    }));
+    document.querySelectorAll(".period-button").forEach((button) => button.addEventListener("click", () => {
+      activePeriod = button.dataset.period;
+      activeView = "period";
+      render();
+    }));
+    document.querySelectorAll("[data-display]").forEach((checkbox) => {
+      const setting = checkbox.dataset.display;
+      checkbox.checked = localStorage.getItem(`display:${setting}`) === "true";
+      document.body.classList.toggle(setting, checkbox.checked);
+      checkbox.addEventListener("change", () => {
+        document.body.classList.toggle(setting, checkbox.checked);
+        localStorage.setItem(`display:${setting}`, String(checkbox.checked));
+      });
+    });
+    groupFilter.addEventListener("change", () => {
+      activeGroupId = groupFilter.value;
+      render();
+    });
+    document.querySelector("#next-alert-button").addEventListener("click", () => {
+      const taskId = document.querySelector("#next-alert-button").dataset.taskId;
+      showTask(taskId, "all");
+    });
+    document.querySelector("#view-all-deadlines").addEventListener("click", () => {
+      activeView = "deadlines";
+      activeFilter = "all";
+      activeGroupId = "";
+      groupFilter.value = "";
+      render();
+    });
+
+    function alertStorageKey() {
+      return `task-alerts:${cloudSession?.user.id || "local"}`;
+    }
+
+    function checkUpcomingNotifications(now = new Date()) {
+      if (!("Notification" in window) || Notification.permission !== "granted") return;
+      let notified = [];
+      try {
+        notified = JSON.parse(localStorage.getItem(alertStorageKey()) || "[]");
+        if (!Array.isArray(notified)) notified = [];
+      } catch {
+        notified = [];
+      }
+      const sent = new Set(notified);
+      const updates = [];
+      tasks.forEach((task) => {
+        const deadline = getTaskMilestone(task, now, true);
+        if (deadline && !deadline.overdue) {
+          const remainingToDeadline = deadline.time - now;
+          const deadlineKey = `${task.id}|deadline-48h|${deadline.time.toISOString()}`;
+          if (remainingToDeadline > 0 && remainingToDeadline <= 48 * 60 * 60 * 1000 && !sent.has(deadlineKey)) {
+            new Notification("Deadline trong 48 giờ tới", { body: `${task.title} · còn ${formatCountdown(remainingToDeadline)}` });
+            sent.add(deadlineKey);
+            updates.push(deadlineKey);
+          }
+        }
+        const milestone = getTaskMilestone(task, now);
+        if (!milestone || milestone.overdue) return;
+        const remaining = milestone.time - now;
+        if (remaining < 0 || remaining > 15 * 60 * 1000) return;
+        const key = `${task.id}|${milestone.type}|${milestone.time.toISOString()}`;
+        if (sent.has(key)) return;
+        new Notification(`${milestone.label} sắp đến`, { body: `${task.title} · còn ${formatCountdown(remaining)}` });
+        sent.add(key);
+        updates.push(key);
+      });
+      if (updates.length) localStorage.setItem(alertStorageKey(), JSON.stringify([...sent].slice(-500)));
+    }
+
+    document.querySelector("#reminder-button").addEventListener("click", async () => {
+      if (!("Notification" in window)) {
+        showToast("Trình duyệt này chưa hỗ trợ thông báo.");
+        return;
+      }
+      const permission = Notification.permission === "default" ? await Notification.requestPermission() : Notification.permission;
+      if (permission === "granted") {
+        document.querySelector("#reminder-button").textContent = "Đã bật nhắc 15 phút";
+        checkUpcomingNotifications();
+        showToast("Đã bật nhắc trước giờ bắt đầu/deadline 15 phút khi trang đang mở.");
+      } else {
+        showToast("Bạn chưa cho phép thông báo trong trình duyệt.");
+      }
+    });
+    refreshCountdowns();
+    checkUpcomingNotifications();
+    setInterval(() => refreshCountdowns(), 1000);
+    setInterval(() => checkUpcomingNotifications(), 15000);
+    searchInput.addEventListener("input", render);
+
+    let authMode = "login";
+    const authForm = document.querySelector("#auth-form");
+    const authMessage = document.querySelector("#auth-message");
+
+    document.querySelector("#auth-switch").addEventListener("click", () => {
+      authMode = authMode === "login" ? "signup" : "login";
+      document.querySelector("#auth-title").textContent = authMode === "login" ? "Đăng nhập" : "Tạo tài khoản";
+      document.querySelector("#auth-copy").textContent = authMode === "login"
+        ? "Đăng nhập để mở danh sách công việc riêng và đồng bộ giữa các thiết bị."
+        : "Tạo tài khoản riêng để công việc chỉ hiển thị với bạn trên các thiết bị đã đăng nhập.";
+      document.querySelector("#auth-submit").textContent = authMode === "login" ? "Đăng nhập" : "Tạo tài khoản";
+      document.querySelector("#auth-switch").textContent = authMode === "login" ? "Tạo tài khoản mới" : "Đã có tài khoản? Đăng nhập";
+      document.querySelector("#auth-password").autocomplete = authMode === "login" ? "current-password" : "new-password";
+      authMessage.textContent = "";
+    });
+
+    authForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!supabaseClient) return;
+      const email = document.querySelector("#auth-email").value.trim();
+      const password = document.querySelector("#auth-password").value;
+      const submit = document.querySelector("#auth-submit");
+      submit.disabled = true;
+      authMessage.dataset.tone = "";
+      authMessage.textContent = "Đang xác thực…";
+      try {
+        const result = authMode === "login"
+          ? await supabaseClient.auth.signInWithPassword({ email, password })
+          : await supabaseClient.auth.signUp({ email, password });
+        if (result.error) throw result.error;
+        if (authMode === "signup" && !result.data.session) {
+          authMessage.dataset.tone = "success";
+          authMessage.textContent = "Tài khoản đã tạo. Hãy xác nhận email, sau đó đăng nhập.";
+        } else {
+          authMessage.dataset.tone = "success";
+          authMessage.textContent = "Đăng nhập thành công. Đang tải công việc…";
+        }
+      } catch (error) {
+        authMessage.textContent = error.message || "Không thể xác thực. Hãy kiểm tra lại thông tin.";
+      } finally {
+        submit.disabled = false;
+      }
+    });
+
+    document.querySelector("#sign-out-button").addEventListener("click", async () => {
+      const { error } = await supabaseClient.auth.signOut();
+      if (error) showToast(`Không thể đăng xuất: ${error.message}`);
+    });
+
+    document.querySelector("#export-button").addEventListener("click", () => {
+      const file = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), tasks, groups }, null, 2)], { type: "application/json" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(file);
+      link.download = `nep-backup-${localDateKey(new Date())}.json`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    });
+
+    document.querySelector("#import-button").addEventListener("click", () => document.querySelector("#import-file").click());
+    document.querySelector("#import-file").addEventListener("change", async (event) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      try {
+        const backup = JSON.parse(await file.text());
+        if (!Array.isArray(backup.tasks)) throw new Error("File sao lưu không có danh sách công việc hợp lệ.");
+        const groupIds = new Map();
+        const importedGroups = Array.isArray(backup.groups) ? backup.groups.filter((group) => group && typeof group.name === "string" && group.name.trim()).map((group) => {
+          const sameName = groups.find((current) => normalizedText(current.name) === normalizedText(group.name));
+          if (sameName) {
+            groupIds.set(group.id, sameName.id);
+            return null;
+          }
+          const id = cloudSession ? createUuid() : group.id || createUuid();
+          groupIds.set(group.id, id);
+          return { id, name: group.name.trim(), sortOrder: groups.length, archived: Boolean(group.archived) };
+        }).filter(Boolean) : [];
+        groups = [...groups, ...importedGroups];
+        const imported = backup.tasks.filter((task) => task && typeof (task.title || task.name) === "string").map((task) => ({
+          id: task.id || globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`,
+          title: task.title || task.name,
+          notes: task.notes || "",
+          category: ["work", "learning", "meeting", "personal"].includes(task.category) ? task.category : "work",
+          groupId: groupIds.get(task.groupId) || groups.find((group) => group.id === task.groupId)?.id || "",
+          done: Boolean(task.done),
+          status: task.status || (task.done ? "done" : "todo"),
+          dueDate: task.dueDate || "",
+          scheduleDate: task.scheduleDate || task.dueDate || "",
+          startTime: task.startTime || "",
+          deadlineTime: task.deadlineTime || "",
+          priority: ["low", "medium", "high"].includes(task.priority) ? task.priority : "medium",
+          minutes: Number(task.minutes) || 25,
+          actualMinutes: task.actualMinutes === null || task.actualMinutes === undefined ? null : Number(task.actualMinutes),
+          recurrence: ["none", "daily", "weekdays", "weekly", "weekly_custom", "monthly"].includes(task.recurrence) ? task.recurrence : "none",
+          recurrenceUntil: task.recurrenceUntil || "",
+          recurrenceDays: Array.isArray(task.recurrenceDays) ? [...new Set(task.recurrenceDays.map(Number).filter((day) => Number.isInteger(day) && day >= 0 && day <= 6))].sort((first, second) => first - second) : [],
+          certainty: task.certainty === "tentative" ? "tentative" : "confirmed",
+          conflictPolicy: ["allow", "prefer", "strict"].includes(task.conflictPolicy) ? task.conflictPolicy : "prefer",
+          seriesId: task.seriesId || task.id || "",
+          createdAt: task.createdAt || new Date().toISOString(),
+          completedAt: task.completedAt || "",
+          reminderNotified: ""
+        }));
+        const merged = new Map(tasks.map((task) => [task.id, task]));
+        imported.forEach((task) => merged.set(task.id, task));
+        tasks = [...merged.values()];
+        if (!await persistGroups({ all: true })) throw new Error("Không thể nhập nhóm lên cloud; các task trên máy vẫn còn.");
+        await save({ tasks: imported });
+        showToast(`${imported.length} công việc đã được nhập.`);
+      } catch (error) {
+        showToast(error.message || "Không thể đọc file sao lưu.");
+      } finally {
+        event.target.value = "";
+      }
+    });
+
+    if (supabaseClient) {
+      supabaseClient.auth.onAuthStateChange((_event, session) => {
+        queueMicrotask(() => handleCloudSession(session));
+      });
+    } else {
+      document.querySelector("#cloud-notice-text").textContent = "Chế độ hiện tại chỉ lưu trên thiết bị này. Hãy cấu hình Supabase để bật tài khoản và đồng bộ cloud.";
+      document.querySelector("#cloud-notice").classList.add("visible");
+      setSyncStatus("local", "Chỉ lưu trên thiết bị");
+    }
+
+    applyAppSettings(appSettings);
+    renderGroups();
+    render();
+  </script>
+</body>
+</html>

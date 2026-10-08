@@ -555,7 +555,7 @@
     let groups = loadGroups();
     const deviceGroups = groups.map((group) => ({ ...group }));
     let cloudSession = null;
-    let realtimeChannel = null;
+    let realtimeChannel = null; let cloudSessionGeneration = 0;
     let migrationCandidate = deviceTasks.length > 0;
 
     if (supabaseClient) document.body.classList.add("auth-required");
@@ -670,7 +670,7 @@
       setSyncStatus("cloud", "Đang đồng bộ…");
       try {
         await flushCloudChanges();
-        setSyncStatus("cloud", "Đã đồng bộ");
+        // Keep unsent changes marked until cloud confirms them.
         return true;
       } catch (error) {
         setSyncStatus("error", "Chưa đồng bộ · thử lại khi có mạng");
@@ -874,7 +874,7 @@
       render();
     }
 
-    async function handleCloudSession(session) {
+    async function handleCloudSession(session) { const generation = ++cloudSessionGeneration;
       cloudSession = session;
       if (realtimeChannel) {
         await supabaseClient.removeChannel(realtimeChannel);
@@ -897,9 +897,9 @@
       });
       setSyncStatus("cloud", "Đang tải dữ liệu…");
       try {
-        await loadCloudGroups();
-        await loadCloudTasks();
-                try { await flushCloudChanges(); } catch {}
+        await loadCloudGroups(); if (generation !== cloudSessionGeneration) return;
+        await loadCloudTasks(); if (generation !== cloudSessionGeneration) return;
+                try { await flushCloudChanges(); } catch {} if (generation !== cloudSessionGeneration) return;
 const canMigrate = !tasks.length && !groups.length && migrationCandidate && (deviceTasks.length > 0 || deviceGroups.length > 0);
         const notice = document.querySelector("#cloud-notice");
         document.querySelector("#cloud-notice-text").textContent = canMigrate
@@ -913,15 +913,15 @@ const canMigrate = !tasks.length && !groups.length && migrationCandidate && (dev
         setSyncStatus("cloud", "Đã đồng bộ");
         realtimeChannel = supabaseClient.channel(`tasks-${session.user.id}`)
           .on("postgres_changes", { event: "*", schema: "public", table: "tasks", filter: `user_id=eq.${session.user.id}` }, () => {
-            loadCloudTasks().catch((error) => setSyncStatus("error", `Lỗi tải dữ liệu: ${error.message}`));
+            if (generation !== cloudSessionGeneration) return; loadCloudTasks().catch((error) => setSyncStatus("error", `Lỗi tải dữ liệu: ${error.message}`));
           })
           .on("postgres_changes", { event: "*", schema: "public", table: "task_groups", filter: `user_id=eq.${session.user.id}` }, () => {
-            loadCloudGroups().catch((error) => setSyncStatus("error", `Lỗi tải nhóm: ${error.message}`));
+            if (generation !== cloudSessionGeneration) return; loadCloudGroups().catch((error) => setSyncStatus("error", `Lỗi tải nhóm: ${error.message}`));
           })
           .subscribe();
       } catch (error) {
-        setSyncStatus("error", "Không tải được cloud");
-        showToast(`Không thể tải dữ liệu: ${error.message}`);
+        if (generation !== cloudSessionGeneration) return; setSyncStatus("error", "Không tải được cloud");
+        if (generation !== cloudSessionGeneration) return; showToast(`Không thể tải dữ liệu: ${error.message}`);
       }
     }
 

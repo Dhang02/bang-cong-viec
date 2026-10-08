@@ -660,19 +660,16 @@
     }
 
     async function save(options = {}) {
-      const cacheKey = cloudSession ? `tasks-cloud:${cloudSession.user.id}` : "tasks";
+    
+  
+  const cacheKey = cloudSession ? `tasks-cloud:${cloudSession.user.id}` : "tasks";
       localStorage.setItem(cacheKey, JSON.stringify(tasks));
       render();
       if (!supabaseClient || !cloudSession) return true;
+      queueCloudChanges(options);
       setSyncStatus("cloud", "Đang đồng bộ…");
       try {
-        const deletedIds = [...new Set([options.deletedId, ...(options.deletedIds || [])].filter(Boolean))];
-        if (deletedIds.length) {
-          const { error } = await supabaseClient.from("tasks").delete().eq("user_id", cloudSession.user.id).in("id", deletedIds);
-          if (error) throw error;
-        }
-        if (options.task) await pushCloudTasks([options.task]);
-        if (options.tasks?.length) await pushCloudTasks(options.tasks);
+        await flushCloudChanges();
         setSyncStatus("cloud", "Đã đồng bộ");
         return true;
       } catch (error) {
@@ -680,6 +677,60 @@
         showToast(`Không thể đồng bộ: ${error.message}`);
         return false;
       }
+    }
+    function cloudQueueKey() {
+      return cloudSession ? `pending-cloud:${cloudSession.user.id}` : "";
+    }
+
+    function readCloudQueue() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(cloudQueueKey()) || "{}");
+        return { tasks: saved.tasks && typeof saved.tasks === "object" ? saved.tasks : {}, deletedIds: Array.isArray(saved.deletedIds) ? saved.deletedIds : [] };
+      } catch {
+        return { tasks: {}, deletedIds: [] };
+      }
+    }
+
+    function writeCloudQueue(queue) {
+      if (cloudQueueKey()) localStorage.setItem(cloudQueueKey(), JSON.stringify(queue));
+    }
+
+    function queueCloudChanges(options = {}) {
+      const queue = readCloudQueue();
+      const deletedIds = [...new Set([options.deletedId, ...(options.deletedIds || [])].filter(Boolean))];
+      for (const id of deletedIds) {
+        delete queue.tasks[id];
+        if (!queue.deletedIds.includes(id)) queue.deletedIds.push(id);
+      }
+      const changedTasks = [...(options.task ? [options.task] : []), ...(options.tasks || [])];
+      for (const task of changedTasks) {
+        queue.tasks[task.id] = task;
+        queue.deletedIds = queue.deletedIds.filter((id) => id !== task.id);
+      }
+      writeCloudQueue(queue);
+    }
+
+    async function flushCloudChanges() {
+      if (!cloudSession || !supabaseClient) return;
+      const userId = cloudSession.user.id;
+      const key = cloudQueueKey();
+      const queue = readCloudQueue();
+      const deletedIds = [...queue.deletedIds];
+      const changedTasks = Object.values(queue.tasks);
+      if (!deletedIds.length && !changedTasks.length) return;
+      if (deletedIds.length) {
+        const { error } = await supabaseClient.from("tasks").delete().eq("user_id", userId).in("id", deletedIds);
+        if (error) throw error;
+      }
+      if (changedTasks.length) await pushCloudTasks(changedTasks);
+      const latest = readCloudQueue();
+      for (const id of deletedIds) latest.deletedIds = latest.deletedIds.filter((queuedId) => queuedId !== id);
+      for (const task of changedTasks) {
+        if (JSON.stringify(latest.tasks[task.id]) === JSON.stringify(task)) delete latest.tasks[task.id];
+      }
+      if (cloudQueueKey() === key && cloudSession?.user.id === userId) writeCloudQueue(latest);
+      const remaining = readCloudQueue();
+      if (remaining.deletedIds.length || Object.keys(remaining.tasks).length) throw new Error("Một số thay đổi mới vẫn đang chờ đồng bộ.");
     }
 
     function setSyncStatus(state, message) {
@@ -813,7 +864,12 @@
       render();
       const { data, error } = await supabaseClient.from("tasks").select("*").eq("user_id", cloudSession.user.id).order("created_at", { ascending: true });
       if (error) throw error;
-      tasks = (data || []).map(fromCloudTask);
+            const serverTasks = (data || []).map(fromCloudTask);
+      const pending = readCloudQueue();
+      const merged = new Map(serverTasks.map((task) => [task.id, task]));
+      pending.deletedIds.forEach((id) => merged.delete(id));
+      Object.values(pending.tasks).forEach((task) => merged.set(task.id, task));
+      tasks = [...merged.values()];
       localStorage.setItem(cacheKey, JSON.stringify(tasks));
       render();
     }
@@ -843,14 +899,17 @@
       try {
         await loadCloudGroups();
         await loadCloudTasks();
-        const canMigrate = !tasks.length && !groups.length && migrationCandidate && (deviceTasks.length > 0 || deviceGroups.length > 0);
+                try { await flushCloudChanges(); } catch {}
+const canMigrate = !tasks.length && !groups.length && migrationCandidate && (deviceTasks.length > 0 || deviceGroups.length > 0);
         const notice = document.querySelector("#cloud-notice");
         document.querySelector("#cloud-notice-text").textContent = canMigrate
           ? `Tìm thấy ${deviceTasks.length} công việc và ${deviceGroups.length} nhóm cũ chỉ lưu trên thiết bị này.`
           : "Đang đồng bộ công việc riêng của tài khoản này.";
         document.querySelector("#migrate-button").hidden = !canMigrate;
         notice.classList.toggle("visible", canMigrate);
-        migrationCandidate = canMigrate;
+                const pendingQueue = readCloudQueue();
+        const hasPending = pendingQueue.deletedIds.length || Object.keys(pendingQueue.tasks).length;
+        setSyncStatus(hasPending ? "error" : "cloud", hasPending ? "Chưa đồng bộ · thử lại khi có mạng" : "Đã đồng bộ");
         setSyncStatus("cloud", "Đã đồng bộ");
         realtimeChannel = supabaseClient.channel(`tasks-${session.user.id}`)
           .on("postgres_changes", { event: "*", schema: "public", table: "tasks", filter: `user_id=eq.${session.user.id}` }, () => {
@@ -2253,7 +2312,11 @@
       }
     });
 
-    if (supabaseClient) {
+          window.addEventListener("online", () => {
+        if (!cloudSession) return;
+        flushCloudChanges().then(() => setSyncStatus("cloud", "Đã đồng bộ")).catch(() => setSyncStatus("error", "Chưa đồng bộ · thử lại khi có mạng"));
+      });
+if (supabaseClient) {
       supabaseClient.auth.onAuthStateChange((_event, session) => {
         queueMicrotask(() => handleCloudSession(session));
       });

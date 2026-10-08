@@ -745,7 +745,7 @@
         user_id: userId,
         title: task.title,
         notes: task.notes,
-        category: task.category,
+        category: task.category || "work",
         group_id: task.groupId || null,
         series_id: task.seriesId || task.id,
         done: task.done,
